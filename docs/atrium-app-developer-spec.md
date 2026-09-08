@@ -433,7 +433,7 @@ WAF/IP blocks on the public API hostname still apply. Auth endpoints and Find-a-
 At connect, COHO mints a **normal Public API key** for this connection (interim). It is revoked on disconnect. It is **not** a fake manager user (`ATRIUM_USER` is not the model).
 
 - Declare `requestedCapabilities` for what you actually call.
-- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`. Missing flag → HTTP 403. See [public-api-endpoints.md](public-api-endpoints.md).
+- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`. Missing flag → HTTP 403.
 - The Store shows requested, granted, pending, and unsupported capabilities.
 - A manifest update never expands an existing key automatically. Existing grants keep working and
   newly requested T3 calls return `403` until an unrestricted manager reviews and approves the exact
