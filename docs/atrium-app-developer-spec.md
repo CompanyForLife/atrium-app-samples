@@ -220,9 +220,8 @@ The Store shows healthy / degraded / paused with the latest message. Catalogue l
 
 - Base: `{apiBaseUrl}/v1.1/public/`
 - Auth: `Authorization: Bearer <apiKey>` from setup
-- OpenAPI: [Scalar COHO Public API 1.1](https://api.coho.life/scalar) — authoritative for request/response shapes. Convenience inventory: [public-api-endpoints.md](public-api-endpoints.md). Version lifecycle: [public-api-lifecycle.md](public-api-lifecycle.md).
-- Do **not** use `/v1/public` or `/v1.0/public` (deprecated; sunset 6 October 2026).
-- Never use database integer ids. Use Guids / references from the API.
+- OpenAPI: [Scalar COHO Public API 1.1](https://api.coho.life/scalar) — authoritative for request/response shapes
+- Use Guids / references from the API — never database integer ids
 
 ### 5.2 Store logs
 
