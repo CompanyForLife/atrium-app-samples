@@ -1,0 +1,9 @@
+.local/
+.local-*/
+bin/
+obj/
+node_modules/
+.env
+.env.*
+*.user
+.DS_Store

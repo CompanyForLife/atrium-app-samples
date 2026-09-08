@@ -1,0 +1,24 @@
+{
+  "manifestVersion": 1,
+  "health": { "path": "/health", "method": "GET" },
+  "requestedCapabilities": ["conversations"],
+  "config": {
+    "mode": "native",
+    "schemaPath": "/config/schema",
+    "getPath": "/config",
+    "putPath": "/config",
+    "quickViewPath": "/ui"
+  },
+  "triggers": {
+    "lifecycle": {
+      "setupPath": "/webhooks/atrium/setup",
+      "disconnectPath": "/webhooks/atrium/disconnect"
+    },
+    "schedules": [],
+    "events": [
+      { "key": "atrium.test", "path": "/webhooks/atrium/triggers/event" },
+      { "key": "tenancy.started", "path": "/webhooks/atrium/triggers/event" },
+      { "key": "tenancy.ended", "path": "/webhooks/atrium/triggers/event" }
+    ]
+  }
+}

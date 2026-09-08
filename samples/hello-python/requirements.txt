@@ -1,0 +1,1 @@
+# Stdlib only (http.server, hmac, hashlib, json). No pip packages required.
