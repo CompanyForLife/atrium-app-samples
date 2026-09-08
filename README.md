@@ -8,7 +8,7 @@ Starter pack for building an Atrium app that COHO can connect, trigger, and disp
 - [Public API endpoints](docs/public-api-endpoints.md) — convenience inventory (Scalar on the API host is authoritative)
 - [Public API lifecycle](docs/public-api-lifecycle.md) — v1.0 vs v1.1
 
-Interactive API reference: Scalar **COHO Public API 1.1** at `/scalar` on the API host.
+Interactive API reference: [Scalar COHO Public API 1.1](https://api.coho.life/scalar).
 
 ## Samples
 

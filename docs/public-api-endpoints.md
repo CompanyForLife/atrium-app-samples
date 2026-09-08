@@ -2,7 +2,7 @@
 
 Convenience inventory for public API v1.0 (deprecated) and v1.1 (current). Routes under `/v1/public/*` (legacy v1.0) and `/v1.1/public/*` (current). Zapier polling triggers are documented separately below.
 
-**Authoritative shapes:** Scalar **COHO Public API 1.1** on the API host (`/scalar`).
+**Authoritative shapes:** [Scalar COHO Public API 1.1](https://api.coho.life/scalar).
 
 **Version lifecycle:** v1.0 is frozen and deprecated; use v1.1 for new integrations. See [public-api-lifecycle.md](public-api-lifecycle.md).
 

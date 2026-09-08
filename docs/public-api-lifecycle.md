@@ -2,7 +2,7 @@
 
 How COHO communicates public API version status to integrators. Applies to `/v1.0/public/*` (legacy), `/v1/public/*` (same legacy surface), and `/v1.1/public/*` (current).
 
-Related: [public-api-endpoints.md](public-api-endpoints.md). Interactive reference: Scalar at `/scalar` on the API host (defaults to **COHO Public API 1.1**).
+Related: [public-api-endpoints.md](public-api-endpoints.md). Interactive reference: [Scalar COHO Public API 1.1](https://api.coho.life/scalar).
 
 ---
 
