@@ -1,115 +1,31 @@
 #!/usr/bin/env node
 /** Minimal Atrium self-host app (Node stdlib only). */
 
-import crypto from 'node:crypto';
 import http from 'node:http';
-
-const ATRIUM_SIGNATURE_HEADER = 'x-atrium-signature';
-const DEFAULT_TOLERANCE_SECONDS = 300;
-const MAX_FUTURE_SKEW_SECONDS = 30;
-const QUICK_VIEW_PATH = '/ui';
-const MAX_BODY_BYTES = 1024 * 1024;
-
-const port = Number.parseInt(process.env.PORT || '5100', 10);
-const setupBootstrapSecret = process.env.ATRIUM_SETUP_SECRET;
-if (!setupBootstrapSecret) {
-  throw new Error('ATRIUM_SETUP_SECRET is required');
-}
-const frameAncestors = sanitizeFrameAncestors(
-  process.env.ATRIUM_FRAME_ANCESTORS || 'http://localhost:4200 http://127.0.0.1:4200',
-);
-
-/** @type {Map<string, string>} */
-const secrets = new Map();
-/** @type {Map<string, Record<string, unknown>>} */
-const configs = new Map();
-
-const CONFIG_SCHEMA = {
-  $schema: 'https://json-schema.org/draft/2020-12/schema',
-  type: 'object',
-  title: 'Hello Atrium settings',
-  additionalProperties: false,
-  properties: {
-    greeting: {
-      type: 'string',
-      title: 'Greeting',
-      description: 'Shown at the top of the app quick view.',
-      default: 'Hello from Atrium',
-      minLength: 1,
-      maxLength: 120,
-    },
-  },
-  required: ['greeting'],
-};
-
-function pathAndQueryForSignature(url) {
-  const query = url.search.startsWith('?') ? url.search.slice(1) : '';
-  const filtered = query
-    .split('&')
-    .filter(
-      (part) =>
-        part &&
-        part !== 'atriumSignature' &&
-        !part.toLowerCase().startsWith('atriumsignature='),
-    );
-  return filtered.length ? `${url.pathname}?${filtered.join('&')}` : url.pathname;
-}
-
-/**
- * @param {string} rawBody
- * @param {string | string[] | undefined} signatureHeader
- * @param {string} signingSecret
- * @param {{ method: string, pathAndQuery: string, connectionReference: string }} request
- * @param {Date} [now]
- * @param {number} [toleranceSeconds]
- */
-function verifyAtriumSignature(
-  rawBody,
-  signatureHeader,
-  signingSecret,
-  request,
-  now = new Date(),
-  toleranceSeconds = DEFAULT_TOLERANCE_SECONDS,
-) {
-  const header = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
-  if (typeof rawBody !== 'string' || !header || !signingSecret) return false;
-  if (!request?.method || !request?.pathAndQuery || !request?.connectionReference) return false;
-
-  let timestamp = null;
-  let v1 = null;
-  for (const part of header.split(',')) {
-    const trimmed = part.trim();
-    const eq = trimmed.indexOf('=');
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq);
-    const value = trimmed.slice(eq + 1);
-    if (key === 't') {
-      const parsed = Number.parseInt(value, 10);
-      if (!Number.isNaN(parsed)) timestamp = parsed;
-    } else if (key === 'v1') {
-      v1 = value.trim().toLowerCase();
-    }
-  }
-
-  if (timestamp == null || !v1) return false;
-
-  const nowSeconds = now.getTime() / 1000;
-  if (timestamp > nowSeconds + MAX_FUTURE_SKEW_SECONDS) return false;
-  if (nowSeconds - timestamp > toleranceSeconds) return false;
-
-  const method = String(request.method).trim().toUpperCase();
-  const signedPayload = `${timestamp}.${method}.${request.pathAndQuery}.${request.connectionReference}.${rawBody}`;
-  const expected = crypto
-    .createHmac('sha256', signingSecret)
-    .update(signedPayload, 'utf8')
-    .digest('hex')
-    .toLowerCase();
-
-  const expectedBuf = Buffer.from(expected, 'utf8');
-  const actualBuf = Buffer.from(v1, 'utf8');
-  if (expectedBuf.length !== actualBuf.length) return false;
-  return crypto.timingSafeEqual(expectedBuf, actualBuf);
-}
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  ATRIUM_SIGNATURE_HEADER,
+  CONFIG_SCHEMA,
+  EXTERNAL_CONFIG_PATH,
+  MAX_BODY_BYTES,
+  QUICK_VIEW_PATH,
+  configureDataDir,
+  configs,
+  connections,
+  deleteConnectionState,
+  externalConfigHtml,
+  loadSecret,
+  loadState,
+  parentOrigin,
+  pathAndQueryForSignature,
+  quickViewHtml,
+  runPublicAPIProbes,
+  sanitizeFrameAncestors,
+  storeConfigState,
+  storeConnectionState,
+  verifyAtriumSignature,
+} from './lib.js';
 
 /**
  * @param {import('node:http').ServerResponse} res
@@ -123,6 +39,21 @@ function sendJson(res, status, body) {
     'Content-Length': Buffer.byteLength(payload),
   });
   res.end(payload);
+}
+
+/**
+ * @param {import('node:http').ServerResponse} res
+ * @param {string} body
+ * @param {Record<string, string>} [extraHeaders]
+ */
+function sendHtml(res, body, extraHeaders = {}) {
+  res.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Length': Buffer.byteLength(body),
+    ...extraHeaders,
+  });
+  res.end(body);
 }
 
 /**
@@ -143,68 +74,57 @@ async function readRawBody(req) {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-function sanitizeFrameAncestors(value) {
-  const trimmed = String(value || "'none'").trim();
-  if (!/^[\w\s'*.:\/\-,]+$/.test(trimmed)) {
-    return "'none'";
-  }
-  return trimmed;
-}
-
 /**
- * @param {string} connectionReference
+ * Browser launch (query atriumSignature, empty body) — matches Go verifyBrowserLaunch.
+ * @param {import('node:http').IncomingMessage} req
+ * @param {import('node:http').ServerResponse} res
+ * @param {URL} url
+ * @returns {string | null}
  */
-function quickViewHtml(connectionReference) {
-  const greeting = configs.get(connectionReference)?.greeting || 'Hello from Atrium';
-  const safeGreeting = String(greeting).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const safeRef = String(connectionReference || '').replace(/</g, '&lt;');
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <title>Hello Atrium</title>
-  <style>
-    body { font-family: Georgia, serif; margin: 1.5rem; color: #1a1a1a; background: #f7f4ef; }
-    button { margin-top: 1rem; padding: 0.5rem 0.9rem; }
-  </style>
-</head>
-<body>
-  <h1>${safeGreeting}</h1>
-  <p>Quick view for connection <code>${safeRef}</code>.</p>
-  <p>This page is intentionally third-party styled.</p>
-  <button type="button" id="close">Close</button>
-  <script>
-    document.getElementById('close').addEventListener('click', () => {
-      parent.postMessage({ type: 'atrium.quickView.close' }, '*');
-    });
-  </script>
-</body>
-</html>`;
+function verifyBrowserLaunch(req, res, url) {
+  const connectionReference = url.searchParams.get('connectionReference') || '';
+  const secret = loadSecret(connectionReference);
+  if (
+    !secret ||
+    !verifyAtriumSignature('', url.searchParams.get('atriumSignature') || '', secret, {
+      method: req.method || 'GET',
+      pathAndQuery: pathAndQueryForSignature(url),
+      connectionReference,
+    })
+  ) {
+    sendJson(res, 401, { ok: false, message: 'Invalid signature' });
+    return null;
+  }
+  return connectionReference;
 }
 
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
+ * @param {URL} url
  * @param {string} connectionReference
  * @param {string} rawBody
+ * @param {string | string[] | undefined} [signatureHeaderOverride]
  */
-async function verifyConnectionSignature(req, res, url, connectionReference, rawBody, signatureHeaderOverride) {
+function verifyConnectionSignature(req, res, url, connectionReference, rawBody, signatureHeaderOverride) {
   if (!connectionReference) {
     sendJson(res, 400, { ok: false, message: 'connectionReference required' });
     return false;
   }
 
-  const secret = secrets.get(connectionReference);
+  const secret = loadSecret(connectionReference);
   if (!secret) {
     sendJson(res, 401, { ok: false, message: 'Unknown connection' });
     return false;
   }
   const header = signatureHeaderOverride || req.headers[ATRIUM_SIGNATURE_HEADER];
-  if (!verifyAtriumSignature(rawBody, header, secret, {
-    method: req.method,
-    pathAndQuery: pathAndQueryForSignature(url),
-    connectionReference,
-  })) {
+  if (
+    !verifyAtriumSignature(rawBody, header, secret, {
+      method: req.method || '',
+      pathAndQuery: pathAndQueryForSignature(url),
+      connectionReference,
+    })
+  ) {
     sendJson(res, 401, { ok: false, message: 'Invalid signature' });
     return false;
   }
@@ -215,17 +135,18 @@ async function verifyConnectionSignature(req, res, url, connectionReference, raw
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
  * @param {URL} url
+ * @param {boolean} allowBody
  * @param {(connectionReference: string, rawBody: string) => unknown | Promise<unknown>} handler
  */
-async function handleSignedConfig(req, res, url, handler) {
+async function handleSignedConfig(req, res, url, allowBody, handler) {
   const connectionReference = url.searchParams.get('connectionReference');
   if (!connectionReference) {
     sendJson(res, 400, { ok: false, message: 'connectionReference query required' });
     return;
   }
 
-  const rawBody = await readRawBody(req);
-  if (!(await verifyConnectionSignature(req, res, url, connectionReference, rawBody))) {
+  const rawBody = allowBody ? await readRawBody(req) : '';
+  if (!verifyConnectionSignature(req, res, url, connectionReference, rawBody)) {
     return;
   }
 
@@ -233,7 +154,7 @@ async function handleSignedConfig(req, res, url, handler) {
     const result = await handler(connectionReference, rawBody);
     sendJson(res, 200, result);
   } catch (err) {
-    if (err?.statusCode === 400) {
+    if (err?.message === 'Invalid JSON' || err?.statusCode === 400) {
       sendJson(res, 400, { ok: false, message: err.message || 'Bad request' });
       return;
     }
@@ -245,9 +166,15 @@ async function handleSignedConfig(req, res, url, handler) {
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
- * @param {(envelope: Record<string, unknown>, rawBody: string) => void | Promise<void>} handler
+ * @param {URL} url
+ * @param {(envelope: Record<string, unknown>) => void | Promise<void>} handler
  */
 async function handleSignedWebhook(req, res, url, handler) {
+  if (req.method !== 'POST') {
+    sendJson(res, 405, { ok: false, message: 'Method not allowed' });
+    return;
+  }
+
   const rawBody = await readRawBody(req);
   let envelope;
   try {
@@ -258,12 +185,12 @@ async function handleSignedWebhook(req, res, url, handler) {
   }
 
   const connectionReference = envelope.connectionReference;
-  if (typeof connectionReference !== 'string' || !(await verifyConnectionSignature(req, res, url, connectionReference, rawBody))) {
+  if (typeof connectionReference !== 'string' || !verifyConnectionSignature(req, res, url, connectionReference, rawBody)) {
     return;
   }
 
   try {
-    await handler(envelope, rawBody);
+    await handler(envelope);
     sendJson(res, 200, { ok: true });
   } catch (err) {
     console.error('[hello-node] handler error', err);
@@ -274,9 +201,11 @@ async function handleSignedWebhook(req, res, url, handler) {
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
+ * @param {URL} url
+ * @param {string} setupBootstrapSecret
  * @param {string} rawBody
  */
-async function handleSetup(req, res, url, rawBody) {
+async function handleSetup(req, res, url, setupBootstrapSecret, rawBody) {
   let envelope;
   try {
     envelope = rawBody ? JSON.parse(rawBody) : {};
@@ -285,20 +214,10 @@ async function handleSetup(req, res, url, rawBody) {
     return;
   }
 
-  const setupSecret = envelope?.data?.signingSecret;
-  const header = req.headers[ATRIUM_SIGNATURE_HEADER];
-  const request = {
-    method: req.method,
-    pathAndQuery: pathAndQueryForSignature(url),
-    connectionReference: envelope.connectionReference,
-  };
-
+  const data = envelope?.data && typeof envelope.data === 'object' ? envelope.data : {};
+  const setupSecret = typeof data.signingSecret === 'string' ? data.signingSecret : '';
   if (!setupSecret) {
     sendJson(res, 401, { ok: false, message: 'Missing signing secret in setup' });
-    return;
-  }
-  if (!verifyAtriumSignature(rawBody, header, setupBootstrapSecret, request)) {
-    sendJson(res, 401, { ok: false, message: 'Invalid signature' });
     return;
   }
 
@@ -308,118 +227,193 @@ async function handleSetup(req, res, url, rawBody) {
     return;
   }
 
+  if (
+    !verifyAtriumSignature(rawBody, req.headers[ATRIUM_SIGNATURE_HEADER], setupBootstrapSecret, {
+      method: req.method || 'POST',
+      pathAndQuery: pathAndQueryForSignature(url),
+      connectionReference,
+    })
+  ) {
+    sendJson(res, 401, { ok: false, message: 'Invalid signature' });
+    return;
+  }
+
+  const apiKey = typeof data.apiKey === 'string' ? data.apiKey : '';
+  let apiBaseUrl = typeof data.apiBaseUrl === 'string' ? data.apiBaseUrl : '';
+  apiBaseUrl = apiBaseUrl.trim().replace(/\/+$/, '');
+
   console.log('[hello-node] setup', {
     connectionReference,
     organisationReference: envelope.organisationReference,
+    apiBaseUrl,
   });
-  secrets.set(connectionReference, setupSecret);
-  configs.set(connectionReference, { greeting: 'Hello from Atrium' });
+
+  try {
+    await storeConnectionState(connectionReference, {
+      signingSecret: setupSecret,
+      apiKey,
+      apiBaseUrl,
+    });
+  } catch (err) {
+    console.error('[hello-node] persist setup failed', err);
+    sendJson(res, 500, { ok: false, message: 'Could not persist setup' });
+    return;
+  }
   sendJson(res, 200, { ok: true });
 }
 
-const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-  const path = url.pathname.replace(/\/$/, '') || '/';
+/**
+ * @param {{ setupBootstrapSecret: string }} options
+ */
+export function createRequestListener(options) {
+  const { setupBootstrapSecret } = options;
 
-  try {
-    if (req.method === 'GET' && path === '/health') {
-      sendJson(res, 200, {
-        ok: true,
-        message: `hello-node; connections=${secrets.size}`,
-      });
-      return;
-    }
+  return async function requestListener(req, res) {
+    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    const path = url.pathname.replace(/\/$/, '') || '/';
 
-    if (req.method === 'GET' && path === '/config/schema') {
-      await handleSignedConfig(req, res, url, async () => CONFIG_SCHEMA);
-      return;
-    }
-
-    if (req.method === 'GET' && path === '/config') {
-      await handleSignedConfig(req, res, url, async (connectionReference) =>
-        configs.get(connectionReference) || {},
-      );
-      return;
-    }
-
-    if (req.method === 'PUT' && path === '/config') {
-      await handleSignedConfig(req, res, url, async (connectionReference, rawBody) => {
-        let config;
-        try {
-          config = rawBody ? JSON.parse(rawBody) : {};
-        } catch {
-          const err = new Error('Invalid JSON');
-          err.statusCode = 400;
-          throw err;
-        }
-        configs.set(connectionReference, config);
-        console.log('[hello-node] config saved', connectionReference);
-        return config;
-      });
-      return;
-    }
-
-    if (req.method === 'GET' && path === QUICK_VIEW_PATH) {
-      const connectionReference = url.searchParams.get('connectionReference');
-      if (!(await verifyConnectionSignature(
-        req,
-        res,
-        url,
-        connectionReference,
-        '',
-        url.searchParams.get('atriumSignature'),
-      ))) {
+    try {
+      if (req.method === 'GET' && path === '/health') {
+        sendJson(res, 200, {
+          ok: true,
+          message: `hello-node; connections=${connections.size}`,
+        });
         return;
       }
-      const html = quickViewHtml(connectionReference);
-      res.writeHead(200, {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Length': Buffer.byteLength(html),
-        'Content-Security-Policy': `frame-ancestors ${frameAncestors}`,
-      });
-      res.end(html);
-      return;
-    }
 
-    if (req.method === 'POST' && path === '/webhooks/atrium/setup') {
-      await handleSetup(req, res, url, await readRawBody(req));
-      return;
-    }
+      if (req.method === 'GET' && path === '/config/schema') {
+        await handleSignedConfig(req, res, url, false, async () => CONFIG_SCHEMA);
+        return;
+      }
 
-    if (req.method === 'POST' && path === '/webhooks/atrium/disconnect') {
-      await handleSignedWebhook(req, res, url, async (envelope) => {
-        console.log('[hello-node] disconnect', envelope.connectionReference);
-        secrets.delete(envelope.connectionReference);
-        configs.delete(envelope.connectionReference);
-      });
-      return;
-    }
+      if (req.method === 'GET' && path === '/config') {
+        await handleSignedConfig(req, res, url, false, async (connectionReference) =>
+          configs.get(connectionReference) || {},
+        );
+        return;
+      }
 
-    if (req.method === 'POST' && path === '/webhooks/atrium/triggers/event') {
-      await handleSignedWebhook(req, res, url, async (envelope) => {
-        console.log('[hello-node] event', envelope.type, envelope.deliveryId);
-      });
-      return;
-    }
+      if (req.method === 'PUT' && path === '/config') {
+        await handleSignedConfig(req, res, url, true, async (connectionReference, rawBody) => {
+          let config;
+          try {
+            config = rawBody ? JSON.parse(rawBody) : {};
+          } catch {
+            const err = new Error('Invalid JSON');
+            err.statusCode = 400;
+            throw err;
+          }
+          await storeConfigState(connectionReference, config);
+          console.log('[hello-node] config saved', connectionReference);
+          return config;
+        });
+        return;
+      }
 
-    if (req.method === 'POST' && path === '/webhooks/atrium/triggers/schedule') {
-      await handleSignedWebhook(req, res, url, async (envelope) => {
-        console.log('[hello-node] schedule', envelope.type, envelope.deliveryId);
-      });
-      return;
-    }
+      if (req.method === 'GET' && path === QUICK_VIEW_PATH) {
+        const connectionReference = verifyBrowserLaunch(req, res, url);
+        if (!connectionReference) return;
 
-    sendJson(res, 404, { ok: false, message: 'Not found' });
-  } catch (err) {
-    if (err?.statusCode === 413) {
-      sendJson(res, 413, { ok: false, message: 'Payload too large' });
-      return;
+        let greeting = 'Hello from Atrium';
+        const config = configs.get(connectionReference);
+        if (config && typeof config.greeting === 'string' && config.greeting) {
+          greeting = config.greeting;
+        }
+
+        const probes = await runPublicAPIProbes(connectionReference);
+        const frameAncestors = sanitizeFrameAncestors(process.env.ATRIUM_FRAME_ANCESTORS);
+        const html = quickViewHtml(greeting, parentOrigin(), probes);
+        sendHtml(res, html, {
+          'Content-Security-Policy': `frame-ancestors ${frameAncestors}`,
+        });
+        return;
+      }
+
+      if (req.method === 'GET' && path === EXTERNAL_CONFIG_PATH) {
+        if (!verifyBrowserLaunch(req, res, url)) return;
+        sendHtml(res, externalConfigHtml());
+        return;
+      }
+
+      if (req.method === 'POST' && path === '/webhooks/atrium/setup') {
+        await handleSetup(req, res, url, setupBootstrapSecret, await readRawBody(req));
+        return;
+      }
+
+      if (req.method === 'POST' && path === '/webhooks/atrium/disconnect') {
+        await handleSignedWebhook(req, res, url, async (envelope) => {
+          console.log('[hello-node] disconnect', envelope.connectionReference);
+          await deleteConnectionState(/** @type {string} */ (envelope.connectionReference));
+        });
+        return;
+      }
+
+      if (req.method === 'POST' && path === '/webhooks/atrium/triggers/event') {
+        await handleSignedWebhook(req, res, url, async (envelope) => {
+          console.log('[hello-node] event', envelope.type, envelope.deliveryId);
+        });
+        return;
+      }
+
+      if (req.method === 'POST' && path === '/webhooks/atrium/triggers/schedule') {
+        await handleSignedWebhook(req, res, url, async (envelope) => {
+          console.log('[hello-node] schedule', envelope.type, envelope.deliveryId);
+        });
+        return;
+      }
+
+      if (req.method !== 'GET' && (path === QUICK_VIEW_PATH || path === EXTERNAL_CONFIG_PATH || path === '/health')) {
+        sendJson(res, 405, { ok: false, message: 'Method not allowed' });
+        return;
+      }
+
+      sendJson(res, 404, { ok: false, message: 'Not found' });
+    } catch (err) {
+      if (err?.statusCode === 413) {
+        sendJson(res, 413, { ok: false, message: 'Payload too large' });
+        return;
+      }
+      console.error('[hello-node] request error', err);
+      sendJson(res, 500, { ok: false, message: 'Server error' });
     }
-    console.error('[hello-node] request error', err);
-    sendJson(res, 500, { ok: false, message: 'Server error' });
+  };
+}
+
+/**
+ * @param {{ setupBootstrapSecret?: string, port?: number }} [options]
+ */
+export async function startServer(options = {}) {
+  const setupBootstrapSecret = options.setupBootstrapSecret ?? process.env.ATRIUM_SETUP_SECRET;
+  if (!setupBootstrapSecret) {
+    throw new Error('ATRIUM_SETUP_SECRET is required');
   }
-});
 
-server.listen(port, '0.0.0.0', () => {
+  const dataDir = process.env.ATRIUM_DATA_DIR;
+  if (dataDir) {
+    configureDataDir(dataDir);
+    await loadState();
+  }
+
+  const port = options.port ?? Number.parseInt(process.env.PORT || '5100', 10);
+  const listener = createRequestListener({ setupBootstrapSecret });
+  const server = http.createServer(listener);
+
+  await new Promise((resolve, reject) => {
+    server.listen(port, '0.0.0.0', (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
   console.log(`[hello-node] listening on http://0.0.0.0:${port}`);
-});
+  return server;
+}
+
+const isMain =
+  Boolean(process.argv[1]) && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  startServer().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

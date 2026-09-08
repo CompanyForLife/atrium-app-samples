@@ -460,11 +460,11 @@ We ship four equal hello-world samples. Each is self-contained — copy one, ada
 | `samples/hello-python` | Python 3, standard library only |
 | `samples/hello-go` | Go, standard library only |
 
-All four implement the same surface: health, signed lifecycle webhooks, a signed trigger, and the native config routes with a schema from §5.3.1. `hello-node` and `hello-go` also demonstrate a quick view.
+All four implement the same surface: health, signed lifecycle webhooks, signed triggers, native config routes with a schema from §5.3.1, optional disk persistence (`ATRIUM_DATA_DIR`), quick view (`/ui`), external configure (`/configure`), and Public API capability probes in the quick view.
 
-We deliberately do not ship a dependency for this. The runtime contract is roughly 300 lines in any language, most of which is HTTP routing you already have in your own stack, and a library that owns your server is useless if you are adding Atrium to an existing app. Verifying signatures is the one part where a subtle mistake is a security hole rather than a bug, which is why it has published test vectors instead of a package.
+We deliberately do not ship a dependency for this. The runtime contract is a few hundred lines in any language, most of which is HTTP routing you already have in your own stack, and a library that owns your server is useless if you are adding Atrium to an existing app. Verifying signatures is the one part where a subtle mistake is a security hole rather than a bug, which is why it has published test vectors instead of a package.
 
-Start from a hello sample. Richer demo apps (schedules, persistence, real Public API calls) may exist for COHO dogfooding; they are not part of the supported external starter set.
+Start from a hello sample. Richer demo apps (schedules, persistence beyond the sample state file, real product workflows) may exist for COHO dogfooding; they are not part of the supported external starter set.
 
 Samples target **self-host**. Atrium Hosting (COHO runs your image) is documented separately when you need it.
 

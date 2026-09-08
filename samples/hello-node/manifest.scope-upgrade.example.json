@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "health": { "path": "/health", "method": "GET" },
-  "requestedCapabilities": ["conversations"],
+  "requestedCapabilities": ["conversations", "settlements"],
   "config": {
     "mode": "both",
     "schemaPath": "/config/schema",

@@ -8,4 +8,11 @@
     <AssemblyName>HelloAtrium</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="HelloAtrium.Tests/**" />
+    <Content Remove="HelloAtrium.Tests/**" />
+    <EmbeddedResource Remove="HelloAtrium.Tests/**" />
+    <None Remove="HelloAtrium.Tests/**" />
+  </ItemGroup>
+
 </Project>
