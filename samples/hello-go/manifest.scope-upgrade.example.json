@@ -1,14 +1,21 @@
 {
   "manifestVersion": 1,
-  "health": { "path": "/health", "method": "GET" },
-  "requestedCapabilities": ["conversations", "settlements"],
+  "health": {
+    "path": "/health",
+    "method": "GET"
+  },
+  "requestedCapabilities": [
+    "conversations",
+    "settlements"
+  ],
   "config": {
     "mode": "both",
     "schemaPath": "/config/schema",
     "getPath": "/config",
     "putPath": "/config",
     "quickViewPath": "/ui",
-    "externalConfigureUrl": "/configure"
+    "externalConfigureUrl": "/configure",
+    "openPresentation": "modal"
   },
   "triggers": {
     "lifecycle": {
@@ -17,8 +24,14 @@
     },
     "schedules": [],
     "events": [
-      { "key": "atrium.test", "path": "/webhooks/atrium/triggers/event" },
-      { "key": "tenancy.started", "path": "/webhooks/atrium/triggers/event" }
+      {
+        "key": "atrium.test",
+        "path": "/webhooks/atrium/triggers/event"
+      },
+      {
+        "key": "tenancy.started",
+        "path": "/webhooks/atrium/triggers/event"
+      }
     ]
   }
 }

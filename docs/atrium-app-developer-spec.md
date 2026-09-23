@@ -45,7 +45,8 @@ registered **base URL**. Browser-facing paths are relative to
     "schemaPath": "/config/schema",
     "getPath": "/config",
     "putPath": "/config",
-    "quickViewPath": null
+    "quickViewPath": null,
+    "openPresentation": null
   },
   "requestedCapabilities": ["conversations"],
   "triggers": {
@@ -66,13 +67,14 @@ registered **base URL**. Browser-facing paths are relative to
 | `health.path` | Unsigned `GET`. See §4. |
 | `triggers.lifecycle.setupPath` | Signed `POST` on connect. **Must return 2xx** or connect rolls back. |
 | `triggers.lifecycle.disconnectPath` | Signed `POST` after credentials are revoked (best-effort). Delete org-scoped data. |
-| `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. |
+| `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. Each entry: `key`, `cron` (5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges, steps), `timezone` (IANA, default UTC), `path`. |
 | `triggers.events` | Opt-in. Unknown keys are ignored until COHO supports them. |
 | `requestedCapabilities` | Public API capability names you intend to use (honesty in the Store). See §8. |
 | `config.schemaPath` / `getPath` / `putPath` | App-owned light config. Store proxies signed GET/PUT. Omit or unused if you have no prefs. |
 | `config.browserBaseUrl` | Public HTTPS origin for hosted app UI. Runtime webhooks and config remain on the private registered base URL. |
 | `config.externalConfigureUrl` | Optional new-tab configure path on the browser base URL. |
 | `config.quickViewPath` | Optional in-COHO iframe. **Omit for agent apps** (webhooks + API only). See §6. |
+| `config.openPresentation` | Optional when `quickViewPath` is set: `full` \| `modal` \| `side`. Store defaults to `modal` if omitted. |
 
 `config.mode` is one or more of `native`, `external`, `embedded`, joined with `+` when combined (for example `native+embedded`). The legacy value `both` means native + external.
 
@@ -190,6 +192,40 @@ First published event keys:
 
 The catalogue will grow. Ignore unknown keys.
 
+#### Event `data` shapes
+
+`event.tenancy.started`:
+
+```json
+{
+  "tenancyReference": "00000000-0000-0000-0000-000000000001",
+  "propertyReference": "12-example-street-abcde",
+  "activatedAt": "2026-09-17T08:00:00Z"
+}
+```
+
+`event.tenancy.ended`:
+
+```json
+{
+  "tenancyReference": "00000000-0000-0000-0000-000000000001",
+  "propertyReference": "12-example-street-abcde",
+  "endedAt": "2026-09-17T08:00:00Z"
+}
+```
+
+`schedule.<key>` (COHO cron tick):
+
+```json
+{
+  "scheduleKey": "daily",
+  "fireTime": "2026-09-17T08:00:05Z"
+}
+```
+
+`tenancyReference` is the tenancy Guid. Times are UTC.
+
+
 ---
 
 ## 4. Health check
@@ -226,6 +262,17 @@ The Store shows healthy / degraded / paused with the latest message. Catalogue l
 ### 5.2 Store logs
 
 `POST {apiBaseUrl}/v1.1/public/atrium/logs`
+
+Organisation-owned app registration (manager API keys; Store Build an app parity):
+
+- `GET /v1.1/public/atrium/apps` — list apps this organisation owns
+- `POST /v1.1/public/atrium/apps/external` — register self-hosted
+- `POST /v1.1/public/atrium/apps/hosted` — register COHO-hosted (queues provision)
+- `PATCH /v1.1/public/atrium/apps/{appReference}` — update listing (allowed while in review)
+- `POST /v1.1/public/atrium/apps/{appReference}/hosted-update` — update hosted source / reprovision
+
+Partner publisher public API is not shipped yet (manage + MCP only).
+
 
 ```json
 {
@@ -433,7 +480,7 @@ WAF/IP blocks on the public API hostname still apply. Auth endpoints and Find-a-
 At connect, COHO mints a **normal Public API key** for this connection (interim). It is revoked on disconnect. It is **not** a fake manager user (`ATRIUM_USER` is not the model).
 
 - Declare `requestedCapabilities` for what you actually call.
-- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`. Missing flag → HTTP 403.
+- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`, `rentPayments`. Missing flag → HTTP 403.
 - The Store shows requested, granted, pending, and unsupported capabilities.
 - A manifest update never expands an existing key automatically. Existing grants keep working and
   newly requested T3 calls return `403` until an unrestricted manager reviews and approves the exact
@@ -472,9 +519,19 @@ Samples target **self-host**. Atrium Hosting (COHO runs your image) is documente
 
 ## 10. Local loop (until Hosting exists)
 
+**Preferred (draft key first):**
+
+1. In a feature-flagged Store org, register a **Draft** app (name only). Copy the one-time API key, signing secret, API base URL, and connection reference.
+2. Build your app against that Public API key (no temporary org key).
+3. Serve `/health` and the lifecycle paths locally; expose HTTPS if the API cannot reach localhost (tunnel).
+4. On **My apps**, set the Base URL to activate — COHO POSTs `lifecycle.setup` with the same credentials; persist the signing secret if your process did not already hold it.
+5. Confirm health, a test event or a real `tenancy.started`, logs in the Store, then disconnect when done.
+
+**Classic (URL first):**
+
 1. Serve your app on localhost with `/health` and the lifecycle paths.
 2. Expose HTTPS if the API cannot reach localhost (tunnel).
-3. Register a **private** app in a feature-flagged Store org: name + base URL + manifest.
+3. Register a **private** external app: name + base URL + manifest.
 4. Connect — you must receive `lifecycle.setup` and persist secrets.
 5. Confirm health, a test event or a real `tenancy.started`, logs in the Store, then disconnect.
 
