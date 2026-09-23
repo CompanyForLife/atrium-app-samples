@@ -6,13 +6,13 @@ This is the pack to send an app developer (or their AI). It is the external cont
 
 Before a **public** catalogue listing, COHO will ask you to pass a quality-gate checklist (shared separately at listing time). Private org apps only need this runtime contract.
 
-**Not in this spec:** Atrium Hosting (how COHO runs your image), COHO CLI, listing review UI, billing, or how COHO staffs its own seed apps.
+**Not in this spec:** Hosting internals (how COHO builds and runs your image on its fleet), COHO CLI, listing review UI, billing, or how COHO staffs its own seed apps. Registering and updating hosted or self-hosted apps via Public API or MCP **is** in scope below.
 
 ---
 
 ## 1. What an Atrium app is
 
-An Atrium app is an **HTTPS service you run** (yourself, or later on Atrium Hosting). COHO never contains your business logic.
+An Atrium app is an **HTTPS service you run** (yourself, or on COHO Hosting). COHO never contains your business logic.
 
 ```text
 Manager connects the app in the Store
@@ -257,7 +257,7 @@ The Store shows healthy / degraded / paused with the latest message. Catalogue l
 - Base: `{apiBaseUrl}/v1.1/public/`
 - Auth: `Authorization: Bearer <apiKey>` from setup
 - OpenAPI: [Scalar COHO Public API 1.1](https://api.coho.life/scalar) — authoritative for request/response shapes
-- Use Guids / references from the API — never database integer ids
+- Use Guids / references from the API — never database integer ids.
 
 ### 5.2 Store logs
 
@@ -412,7 +412,51 @@ COHO validates the schema when it is loaded and validates config against that sa
 
 ### 5.4 MCP (AI access)
 
-MCP is a capability of COHO Atrium, not a separately named product. Managers connect Claude (or similar) through their COHO account. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
+MCP is a capability of COHO Atrium, not a separately named product. Managers (and partner publishers) connect an MCP client such as Cursor through their COHO account. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
+
+Production MCP endpoint: `https://mcp.coho.life/mcp` (OAuth via the COHO API). The session binds to **one** organisation. Tools always act on that linked org — confirm with `get_organisation_summary` / `list_managed_atrium_apps` before create. Shared demo reference strings can map to different org rows; use the org your MCP session is actually linked to.
+
+#### Organisation tools (manager session)
+
+| Goal | Tool | Notes |
+|---|---|---|
+| List apps this org owns | `list_managed_atrium_apps` | Not the public catalogue. Watch `ProvisioningState` for hosted apps. |
+| Browse Store catalogue | `list_atrium_catalogue` | Public listed apps plus this org's private apps. |
+| Register self-hosted | `create_atrium_external_app` | Supply `baseUrl` + `manifestJson` (or fields the tool accepts). |
+| Register COHO-hosted | `create_atrium_hosted_app` | `sourceType` `zip` or `github`; queues provision (same pipeline as Store **Build an app**). |
+| Update listing / manifest | `update_atrium_app_listing` | Name, descriptions, self-host `baseUrl`, `manifestJson`. Does **not** rebuild a hosted image. |
+| Reprovision hosted source | `update_atrium_hosted_app` | New zip key or GitHub URL/ref; requeues provision. |
+
+Create / update tools that take `confirmed` must be previewed with `confirmed: false`, then re-run with `confirmed: true` only after an explicit human OK in the chat. Agents must not set `confirmed: true` on their own.
+
+**Connect is not an MCP tool yet.** After a hosted app reaches `ready`, connect from the Store (My apps) so COHO POSTs `lifecycle.setup`. Setup must return 2xx or connect rolls back.
+
+#### Hosted zip flow (organisation)
+
+1. Build a zip whose Dockerfile path is valid from the archive root. Exclude `node_modules` and `.git`. Include a lockfile when the Dockerfile runs `npm ci`. The process must listen on the Hosting contract port (hello samples use `8080`).
+2. `get_presigned_upload_url` with `filename` and `fileType: application/zip`.
+3. `PUT` the zip bytes to the returned `PresignedUrl` with `Content-Type: application/zip`. Keep `Key` as `sourceLocator`.
+4. `create_atrium_hosted_app` with `sourceType: zip`, that `sourceLocator`, `dockerfilePath` relative to the zip root, optional `manifestJson`, and `requestPublicListing: false` for a private draft (preview with `confirmed: false` first).
+5. Poll `list_managed_atrium_apps` until `ProvisioningState` is `ready` (or `failed`). Typical states: queued → fetching → building → pushing_image → deploying → ready.
+6. Connect in the Store, then confirm `/health` on the minted browser host if the app has browser UI.
+
+GitHub source uses the same create/update tools with a public HTTPS repository URL and optional `sourceRef`. Listing-only changes (copy, `openPresentation`, paths) use `update_atrium_app_listing` without a rebuild. To replace the running image, upload a new zip (or change GitHub ref) and call `update_atrium_hosted_app`.
+
+Example zip layout when shipping a hello sample from this pack:
+
+```text
+samples/hello-node/
+  Dockerfile
+  package.json
+  package-lock.json
+  …
+```
+
+`dockerfilePath` example: `samples/hello-node/Dockerfile`.
+
+#### Partner publisher tools
+
+Partners with an Atrium developer session use the publisher variants (`list_publisher_atrium_apps`, `create_publisher_atrium_external_app`, `create_publisher_atrium_hosted_app`, `update_publisher_atrium_app_listing`, `update_publisher_atrium_hosted_app`). Those register public-intent submissions (typically `in_review`). Partner **public API** keys are not shipped yet — manage + MCP only for publishers.
 
 ---
 
@@ -513,11 +557,11 @@ We deliberately do not ship a dependency for this. The runtime contract is a few
 
 Start from a hello sample. Richer demo apps (schedules, persistence beyond the sample state file, real product workflows) may exist for COHO dogfooding; they are not part of the supported external starter set.
 
-Samples target **self-host**. Atrium Hosting (COHO runs your image) is documented separately when you need it.
+Samples target **self-host** first. To have COHO build and run your image, register a hosted app via Store, Public API (§5.2), or MCP (§5.4).
 
 ---
 
-## 10. Local loop (until Hosting exists)
+## 10. Local loop (self-host)
 
 **Preferred (draft key first):**
 
