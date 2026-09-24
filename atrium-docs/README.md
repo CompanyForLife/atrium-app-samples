@@ -1,59 +1,28 @@
-# AtriumDocs
+# Atrium dev docs site
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.24.
+The Angular site that renders `docs/atrium-app-developer-spec.md` (one level up in this repo) into the developer docs at [the deployed GitHub Pages site](https://companyforlife.github.io/atrium-app-samples/). This README is for anyone maintaining the site itself - if you're looking for the actual Atrium developer docs, read the deployed site or the spec doc directly.
 
-## Development server
+## How content gets in
 
-To start a local development server, run:
+Nothing here is hand-written. `scripts/generate-spec-content.mjs` reads `../docs/atrium-app-developer-spec.md`, splits it on `## N. Title` headings, and writes `src/app/content/spec-content.generated.json` (gitignored, regenerated on every `npm start` / `npm run build` via the `prebuild`/`prestart` npm scripts). To change what the docs pages say, edit the spec doc - never the generated JSON, and never hand-type content into a component.
 
-```bash
-ng serve
-```
+Sample page content (`src/app/content/samples.ts`) is the one exception - it's hand-maintained to match each sample's real README under `../samples/`, since those aren't structured the same way as the spec doc.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Design system
 
-## Code scaffolding
+`assets/scss/` at the repo root is a vendored snapshot of the specific HouseShare design system files this site needs (colour tokens, grid, mixins, icon fill classes, base reset) - traced to a minimal, self-contained set with no other dependencies. This is a frozen copy, not a live link: if HouseShare's design system changes, this site won't pick it up automatically. If a visual mismatch shows up later, that's most likely why - re-copy the relevant file(s) from HouseShare's `assets/scss/` by hand.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+The icon sprite (`public/assets/images/svg/svg-symbols.svg`) is vendored the same way, for the same reason.
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Local development
 
 ```bash
-ng generate --help
+npm install
+npm start
 ```
 
-## Building
+Serves at `http://localhost:4300` (see `angular.json`) with live reload. `npm run build` produces a fully prerendered static site (every doc section and sample page is baked to real HTML at build time - no server needed) in `dist/atrium-docs/browser`.
 
-To build the project run:
+## Deployment
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+`.github/workflows/deploy-docs.yml` builds and publishes `dist/atrium-docs/browser` to GitHub Pages on every push to `main` that touches `atrium-docs/` or the spec doc. It can also be run manually from the Actions tab. GitHub Pages itself needs "Source: GitHub Actions" set in the repo's Settings > Pages (already done as of this site's initial deploy).

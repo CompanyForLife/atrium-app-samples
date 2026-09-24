@@ -4,7 +4,8 @@ Starter pack for building an Atrium app that COHO can connect, trigger, and disp
 
 ## Docs
 
-- [App developer spec](docs/atrium-app-developer-spec.md) — runtime contract (manifest, webhooks, health, config, quick view, MCP app manage, rate limits)
+- [Atrium dev docs site](https://companyforlife.github.io/atrium-app-samples/) — the runtime contract (manifest, webhooks, health, config, quick view, MCP app manage, rate limits), rendered for reading
+- [App developer spec](docs/atrium-app-developer-spec.md) — same content as raw markdown, if you'd rather read or grep it directly
 - [Scalar COHO Public API 1.1](https://api.coho.life/scalar) — interactive API reference
 
 ## Samples
