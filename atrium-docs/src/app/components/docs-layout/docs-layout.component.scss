@@ -41,5 +41,6 @@ aside {
   @include mx.breakpoint(for-tablet-portrait-up) {
     display: block;
     border-right: 1px solid #e6e6e6;
+    box-shadow: -100vw 0 0 var(--color-grey-xxlight);
   }
 }
