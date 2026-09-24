@@ -1,0 +1,124 @@
+﻿.icon, .icon-settings, .icon svg {
+    &.icon--cyan {
+        fill: var(--color-cyan);
+    }
+
+    &.icon--cyan-dark {
+        fill: var(--color-cyan-dark);
+    }
+
+    &.icon--cyan-xdark, &.icon--xdark-cyan {
+        fill: var(--color-cyan-xdark);
+    }
+
+    &.icon--blue {
+        fill: var(--color-blue);
+    }
+
+    &.icon--primary {
+        fill: var(--color-primary);
+    }
+
+    &.icon--green {
+        fill: var(--color-green);
+    }
+
+    &.icon--darkgreen,  &.icon--green-dark  {
+        fill: var(--color-green-dark);
+    }
+    &.icon--xdarkgreen, &.icon--green-xdark {
+        fill: var(--color-green-xdark);
+    }
+
+    &.icon--pink {
+        fill: var(--color-pink);
+    }
+
+    &.icon--darkpink,  &.icon--pink-dark {
+        fill: var(--color-pink-xdark);
+    }
+
+    &.icon--magenta {
+        fill: var(--color-magenta);
+    }
+
+    &.icon--dark-magenta,  &.icon--magenta-dark {
+        fill: var(--color-magenta-xdark);
+    }
+
+    &.icon--pumpkin {
+        fill: var(--color-pumpkin);
+    }
+
+    &.icon--orange {
+        fill: var(--color-orange);
+    }
+    &.icon--orange-dark, &.icon--dark-orange {
+        fill: var(--color-orange-dark);
+    }
+    &.icon--orange-xdark, &.icon--xdark-orange {
+        fill: var(--color-orange-xdark);
+    }
+
+    &.icon--grey {
+        fill: var(--color-grey);
+    }
+
+    &.icon--light-grey,  &.icon--grey-border {
+        fill: var(--color-grey-border);
+    }
+
+    &.icon--very-light-grey, &.icon--light1-grey,  &.icon--grey-light {
+        fill: var(--color-grey-light);
+    }
+
+    &.icon--light2-grey,  &.icon--grey-xlight {
+        fill: var(--color-grey-xlight);
+    }
+
+    &.icon--very-light-grey {
+        fill: #d5d5d5;
+    }
+
+    &.icon--teal {
+        fill: var(--color-teal);
+    }
+
+    &.icon--dark-teal,  &.icon--teal-dark {
+        fill: var(--color-teal-xdark);
+    }
+
+    &.icon--white {
+        fill: white;
+    }
+
+    &.icon--warning {
+        fill: var(--color-warning-dark);
+    }
+
+    &.icon--violet {
+        fill: var(--color-violet-dark);
+    }
+
+    &.icon--violet-mid {
+        fill: var(--color-violet);
+    }
+
+    &.icon--black {
+        fill: var(--color-text);
+    }
+
+}
+.heading--settings {
+    .icon-student {
+        cursor: pointer;
+    }
+}
+.icon-settings {
+    cursor: pointer;
+}
+.icon-reload {
+  cursor: pointer;
+}
+
+

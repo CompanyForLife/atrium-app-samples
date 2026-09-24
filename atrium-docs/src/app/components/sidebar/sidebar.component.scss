@@ -1,0 +1,78 @@
+@use 'foundation/functions' as fn;
+@use 'foundation/mixins' as mx;
+
+:host {
+  display: contents;
+}
+
+.sidebar {
+  padding: fn.rems(28) fn.rems(20) fn.rems(28) fn.rems(24);
+
+  @include mx.breakpoint(for-tablet-portrait-up) {
+    position: sticky;
+    top: fn.rems(76);
+    max-height: calc(100vh - #{fn.rems(76)});
+    overflow-y: auto;
+  }
+}
+
+.sidebar__title {
+  margin: 0 0 fn.rems(16);
+  color: var(--color-grey);
+  font-size: fn.rems(12);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sidebar__group-label {
+  margin: fn.rems(16) 0 fn.rems(2);
+  color: var(--color-grey-border);
+  font-size: fn.rems(12);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.sidebar__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    margin-bottom: fn.rems(2);
+  }
+
+  a {
+    display: block;
+    padding: fn.rems(8) fn.rems(10);
+    border-radius: fn.rems(5);
+    color: var(--color-blue);
+    font-size: fn.rems(14);
+    font-weight: 600;
+    line-height: fn.rems(22.4);
+    text-decoration: none;
+
+    &:hover {
+      background: var(--color-grey-xxlight);
+    }
+
+    &:focus {
+      outline-width: fn.rems(1);
+      outline-offset: fn.rems(1);
+    }
+
+    &.sidebar__link--active {
+      background: var(--color-pink-light);
+      color: var(--color-pink);
+
+      &:hover {
+        background: var(--color-pink-light);
+      }
+    }
+  }
+}

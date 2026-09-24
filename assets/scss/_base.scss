@@ -1,0 +1,79 @@
+﻿@use "foundation/functions" as fn;
+
+html{
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+}
+  
+body, html{
+    margin: 0;
+    padding: 0;
+    position: relative;
+    scroll-behavior: smooth;
+}
+
+*, *:before, *:after {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+  
+.sr-only{
+    position:absolute;
+    left:-10000px;
+    top:auto;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+}
+
+*:focus{
+    outline: fn.rems(3) solid var(--color-magenta);
+    outline-offset: fn.rems(2);
+}
+
+.nofocus {
+    outline: 0;
+}
+
+app-root{
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+    min-height: 100vh;
+}
+
+.page-shell {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.page-shell > #firstContainer {
+    flex: 1 0 auto;
+}
+
+
+// Light mode tweaks for iOS status bar
+
+html:not(.embed) .site__content {
+    background-color: var(--color-white);
+}
+
+
+// Embed Tweaks (see also Preloader.scss)
+
+.embed .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important; 
+    width: calc( 100% - 1.75rem)
+}
+
+
+
+
+
