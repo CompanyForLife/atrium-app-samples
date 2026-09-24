@@ -2,6 +2,8 @@
 @use 'foundation/mixins' as mx;
 
 .docs-layout {
+  max-width: fn.rems(1200);
+  margin: 0 auto;
   padding: 0 fn.rems(16);
 
   @include mx.breakpoint(for-tablet-portrait-up) {
