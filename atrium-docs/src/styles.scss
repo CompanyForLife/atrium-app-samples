@@ -1,0 +1,29 @@
+@use 'foundation/functions' as fn;
+@use 'foundation/mixins' as mx;
+@use 'foundation/tokens' as tokens;
+@use 'theme/colours';
+@use 'components/layout/grid-modern';
+@use 'components/icons/colors';
+@use 'base';
+
+html,
+body {
+  font-family: tokens.$type__family;
+  color: var(--color-black);
+  background: var(--color-white);
+}
+
+.symbols--hide {
+  display: none;
+}
+
+svg-icon {
+  display: inline-flex;
+  width: fn.rems(20);
+  height: fn.rems(20);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}

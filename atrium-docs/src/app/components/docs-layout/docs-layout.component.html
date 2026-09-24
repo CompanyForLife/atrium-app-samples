@@ -1,0 +1,19 @@
+<div class="docs-layout grid grid--12 grid-gap-lg">
+  <aside class="grid-span-12 grid-span-md-3">
+    <app-sidebar />
+  </aside>
+
+  <main
+    class="docs-layout__content grid-span-12"
+    [class.grid-span-md-7]="tocHeadings().length"
+    [class.grid-span-md-9]="!tocHeadings().length"
+  >
+    <router-outlet />
+  </main>
+
+  @if (tocHeadings().length) {
+    <div class="docs-layout__toc-col grid-span-12 grid-span-md-2">
+      <app-toc [headings]="tocHeadings()" />
+    </div>
+  }
+</div>

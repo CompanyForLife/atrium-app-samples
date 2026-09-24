@@ -1,0 +1,47 @@
+<footer class="app-footer">
+  <div class="app-footer__inner grid grid--12 grid-gap-lg">
+    <div class="grid-span-12 grid-span-md-4">
+      <p class="app-footer__logo">COHO</p>
+      <p class="app-footer__tagline">More than just a property management system.</p>
+      <ul class="app-footer__social">
+        @for (social of socialLinks; track social.name) {
+          <li>
+            <a [href]="social.href" target="_blank" rel="noopener" [title]="social.title">
+              <svg-icon [name]="social.name" />
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="grid-span-12 grid-span-md-4">
+      <ul class="app-footer__links">
+        @for (link of aboutLinks; track link.href) {
+          <li><a [href]="link.href">{{ link.label }}</a></li>
+        }
+      </ul>
+      <ul class="app-footer__links">
+        @for (link of resourceLinks; track link.href) {
+          <li><a [href]="link.href">{{ link.label }}</a></li>
+        }
+      </ul>
+    </div>
+
+    <div class="grid-span-12 grid-span-md-4">
+      <ul class="app-footer__links">
+        @for (link of legalLinks; track link.href) {
+          <li><a [href]="link.href">{{ link.label }}</a></li>
+        }
+      </ul>
+      <ul class="app-footer__links">
+        @for (link of supportLinks; track link.href) {
+          <li><a [href]="link.href">{{ link.label }}</a></li>
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div class="app-footer__copyright">
+    &copy; 2020-{{ currentYear }} Company For Life Ltd.
+  </div>
+</footer>

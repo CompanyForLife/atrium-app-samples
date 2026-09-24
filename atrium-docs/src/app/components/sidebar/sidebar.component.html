@@ -1,0 +1,16 @@
+<nav class="sidebar">
+  <p class="sidebar__title">Atrium dev docs</p>
+
+  @for (group of groups; track group.label) {
+    <p class="sidebar__group-label">{{ group.label }}</p>
+    <ul class="sidebar__links">
+      @for (section of group.sections; track section.slug) {
+        <li>
+          <a [routerLink]="['/docs', section.slug]" routerLinkActive="sidebar__link--active">
+            {{ section.number }}. {{ section.title }}
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</nav>

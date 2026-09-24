@@ -1,0 +1,588 @@
+﻿@use "sass:math";
+@use "sass:map";  
+$dev: false;
+/** -----------------------------------------------------------
+ * 01. BREAKPOINTS
+ * Breakpoints
+ ----------------------------------------------------------- */
+
+ $max-width__minimise-nav: 52px;
+ $max-width__wide-nav: 720px;
+
+ $bp__large-phone: "(min-width: 25.875rem)"; // 414
+ $bp__large-phone-landscape: "(min-width: 35rem)"; // 560
+ $bp__tablet-portrait: "(min-width : 48rem)"; // 768
+ $bp__tablet-landscape: "(min-width : 72rem)"; // 1152
+ $bp__small-desktop: "(min-width : 80rem)"; // 1280
+ $bp__large-desktop: "(min-width : 90rem)"; // 1440
+ $bp__wide-desktop: "(min-width : 118rem)"; // 1900
+
+
+ @mixin breakpoint($breakpoint){
+   @if $breakpoint == for-large-phone-up {
+   @media #{$bp__large-phone} { @content; }
+   }
+   @if $breakpoint == for-large-phone-landscape-up {
+     @media #{$bp__large-phone-landscape} { @content; }
+     }
+   @if $breakpoint == for-tablet-portrait-up {
+   @media #{$bp__tablet-portrait} { @content; }
+   }
+   @if $breakpoint == for-tablet-landscape-up {
+   @media #{$bp__tablet-landscape} { @content; }
+   }
+   @if $breakpoint == for-small-desktop-up {
+    @media #{$bp__small-desktop} { @content; }
+    }
+    @if $breakpoint == for-large-desktop-up {
+        @media #{$bp__large-desktop} { @content; }
+    }
+    @if $breakpoint == for-wide-desktop-up {
+        @media #{$bp__wide-desktop} { @content; }
+    }
+}
+
+/** -----------------------------------------------------------
+ * 02. BROWSER DETECTION MEDIA QUERIES
+ * Browser Detection Media Queries
+ ----------------------------------------------------------- */
+
+// Chrome 29+
+@mixin chrome-29-up {
+    @media screen and (-webkit-min-device-pixel-ratio:0) and (min-resolution:.001dpcm) {
+        @content;
+    }
+}
+
+// Safari 11+
+@mixin safari-11-up {
+    @media not all and (min-resolution:.001dpcm) {
+        @supports (-webkit-appearance:none) and (stroke-color:transparent) {
+            @content;
+        }
+    }
+}
+
+ /** -----------------------------------------------------------
+ * 03. COLORS
+ * Colors
+ ----------------------------------------------------------- */
+
+$color__grey--light-1: #cccccc;
+$color__grey--light-2: #ededed;
+$color__grey--light-3: #f7f7f7;
+$color__warning: #FF5C5C;
+$color__warning--dark: #CC4949;
+$color__warning--light: #FFDEDE;
+$color__rating--silver: #9A9FAD;
+$color__rating--gold: #A09164;
+$color__rating--bronze: #D68E7A;
+
+$color__blue: #293B5B;
+$color__blue--dark: #23324E;
+$color__blue--xdark: #212736;
+$color__blue--light: #D4D8DE;
+
+$color__cyan: #1C9BD8;
+$color__cyan--dark: #1885B9;
+$color__cyan--xdark: #00699B;
+$color__cyan--light: #E8F5FB;
+
+$color__pink: #ED2B67;
+$color__pink--dark: #CB2559;
+$color__pink--xdark: #B60F42;
+$color__pink--light: #FDE9EF;
+
+$color__magenta: #CC0A73;
+$color__magenta--light: #FCF0F6;
+$color__magenta--dark: #AE0862;
+$color__magenta--xdark: #960051;
+$color__magenta--xxdark: #6e0037;
+
+$color__teal: #1BB3AF;
+$color__teal--dark: #179996;
+$color__teal--xdark: #0C827F;
+$color__teal--xxdark: #0a6b69;
+$color__teal--light: #D1F0EF;
+$color__teal--xlight: #E8F7F7;
+
+$color__grey--light: #CCCCCC;
+$color__grey--border: #959595;
+$color__grey: #5F5F5F;
+$color__grey--dark: #515151;
+$color__grey--xlight: #ededed;
+
+$color__green: #89DA78;
+$color__green--dark: #75BA67;
+$color__green--xdark: #5FA94F;
+$color__green--xxdark: #4b8a3d;
+$color__green--light: #E7F8E4;
+
+$color__brown: #A88773;
+$color__brown--dark: #8C705F;
+$color__brown--xdark: #6B594E;
+$color__brown--light: #EADAD0;
+
+$color__violet: #877c98;
+$color__violet--dark: #5f5176;
+$color__violet--xdark: #372554;
+$color__violet--light: #d7d3dd;
+
+$color__pumpkin: #f09d5d;
+$color__pumpkin--dark: #d36815;
+$color__pumpkin--xdark: #ac4f07;
+$color__pumpkin--light: #f3d6c0;
+
+$color__red: #c96959;
+$color__red--dark: #a83d2b;
+$color__red--xdark: #833022;
+$color__red--light: #f0d5cf;
+$color__red--xlight: #f2e5e3;
+
+
+$color__white: #FFFFFF;
+$color__white--dark: #E5E5E5;
+
+$color__orange: #EDC32B;
+$color__orange--dark: #EB9800;
+$color__orange--xdark: #c38006;
+$color__orange--xxdark: #b47708;
+$color__orange--light: #FFF7DB;
+
+$color__black: #262626;
+$color__black--light: #3D3D3D;
+
+$color__text: $color__black;
+
+$color__forms_svg: '%23179996';
+$color__forms_svg_disabled: '%23959595';
+$color__forms_svg_required: '%23ED2B67';
+$color__forms_svg_readonly: '%23CCCCCC';
+$color__forms_focus: '%23262626';
+$color__forms_grey: '%235F5F5F';
+
+
+$colors: (
+    black: (
+        base: $color__black,
+        light: $color__black--light
+    ),
+    blue: (
+        base: $color__blue,
+        dark: $color__blue--dark,
+        xdark: $color__blue--xdark,
+		light: $color__blue--light
+    ),
+    white: (
+        base: $color__white,
+        dark: $color__white--dark
+    ),
+    pink: (
+        base: $color__pink,
+        dark: $color__pink--dark,
+        xdark: $color__pink--xdark,
+        light: $color__pink--light
+    ),
+    magenta: (
+        base: $color__magenta,
+        light: $color__magenta--light,
+        dark: $color__magenta--dark,
+        xdark: $color__magenta--xdark,
+        xxdark: $color__magenta--xxdark
+    ),
+    teal:(
+        base: $color__teal,
+        dark: $color__teal--dark,
+        xdark: $color__teal--xdark,
+        xxdark: $color__teal--xxdark,
+        light: $color__teal--light,
+        xlight: $color__teal--xlight
+    ),
+    cyan: (
+        base: $color__cyan,
+        dark: $color__cyan--dark,
+        xdark: $color__cyan--xdark,
+        light: $color__cyan--light
+    ),
+    green: (
+        base: $color__green,
+        dark: $color__green--dark,
+        xdark: $color__green--xdark,
+        xxdark: $color__green--xxdark,
+        light: $color__green--light
+    ),
+    brown: (
+        base: $color__brown,
+        dark: $color__brown--dark,
+        xdark: $color__brown--xdark,
+        light: $color__brown--light
+    ),
+    violet: (
+        base: $color__violet,
+        dark: $color__violet--dark,
+        xdark: $color__violet--xdark,
+        light: $color__violet--light
+    ),
+    pumpkin: (
+        base: $color__pumpkin,
+        dark: $color__pumpkin--dark,
+        xdark: $color__pumpkin--xdark,
+        light: $color__pumpkin--light
+    ),
+    red: (
+        base: $color__red,
+        dark: $color__red--dark,
+        xdark: $color__red--xdark,
+        light: $color__red--light,
+        xlight: $color__red--xlight
+    ),
+    form:(
+        base: $color__teal,
+        dark: $color__teal--dark,
+        light: $color__teal--light
+    ),
+    grey:(
+        base: $color__grey,
+		dark: $color__grey--dark,
+        light: $color__grey--light,
+        border: $color__grey--border,
+        xlight: $color__grey--xlight,
+        light-1: $color__grey--light-1,
+        light-2: $color__grey--light-2,
+        light-3: $color__grey--light-3
+    ),
+    text: (
+        base: $color__text
+    ),
+    warning: (
+        base: $color__warning,
+        light: $color__warning--light,
+        dark: $color__warning--dark
+    ),
+    orange: (
+        base: $color__orange,
+        light: $color__orange--light,
+        dark: $color__orange--dark,
+        xdark: $color__orange--xdark,
+        xxdark: $color__orange--xxdark
+    ),
+    rating: (
+        bronze: $color__rating--bronze,
+        silver: $color__rating--silver,
+        gold: $color__rating--gold
+    )
+);
+
+// color($color, $tone)
+// Arguments:
+// $color: Name of color palette
+// $tone: Tint of the color
+
+@function color($color, $tone: 'base'){
+    @return map.get(map.get($colors, $color), $tone);
+}
+
+/** -----------------------------------------------------------
+ * 04. SIZES
+ * Sizes
+ ----------------------------------------------------------- */
+
+// Function to return sizes in rems from pixel sizes
+
+@function rems($px){
+    @return math.div($px,16) + rem ;
+}
+
+
+$size__radius: rems(8);
+$size__radius--md: rems(4);
+$size__radius--sm: rems(2);
+
+$radii: (
+    large: $size__radius,
+    medium: $size__radius--md,
+    small: $size__radius--sm
+);
+
+
+@function radius($size: 'large'){
+    @return map.get($radii, $size);
+}
+
+$size__checkbox-size: 24;
+$size__checkbox-size--sm: 15;
+
+$size__message-nav--sm: 4.375rem;
+$size__message-nav--md: 15rem;
+$size__message-nav--lg: 20rem;
+
+$size__header--sm: rems(64);
+$size__header--md: rems(80);
+
+$shadow__up: 0 rems(3) 0 0 rgba(0,0,0,0.07);
+$shadow__inset: inset 0 rems(3) 0 0 rgba(0,0,0,0.07);
+$shadow__outline: 0 0 0 rems(1) rgba(var(--color-form-rgb),0.25);
+$shadow__radio-buttons: inset 0 0 0 rems(2) var(--color-form);
+$shadow__radio-buttons--focus: inset 0 0 0 rems(2) var(--color-form);
+$shadow__radio-buttons--disabled: inset 0 0 0 rems(2) var(--color-grey);
+$shadow__required: 0 0 0 1px var(--color-magenta);
+
+
+
+
+@mixin shadow__low{
+    box-shadow: 0 rems(3) rems(6) 0 rgba(0,0,0,0.10);
+}
+
+@mixin shadow__high{
+    box-shadow: 0 rems(6) rems(48) 0 rgba(0,0,0,0.20),
+    0 rems(3) rems(6) 0 rgba(0,0,0,0.15);
+}
+
+@mixin shadow__input_active{
+    box-shadow: inset 0 rems(3) 0 0 rgba(0,0,0,0.07),
+    0 0 0 rems(3) rgba(var(--color-form-rgb),0.75);
+}
+
+@mixin shadow__input_active-inset{
+    box-shadow:  inset 0 0 0 rems(3) rgba(var(--color-form-rgb),0.75);
+}
+
+@mixin shadow__up{
+    box-shadow: 0 rems(3) 0 0 rgba(0,0,0,0.07);
+}
+
+@mixin shadow__up_active{
+    box-shadow: 0 rems(3) 0 0 rgba(0,0,0,0.07),
+    0 0 0 rems(2) var(--color-pink);
+}
+
+@mixin input__down{
+    background: #FFFFFF;
+    border: rems(1) solid var(--color-grey-light);
+    border-radius: radius(medium);
+    //box-shadow: $shadow__inset;
+    font-family: $type__family;
+    font-size: rems(16);
+    font-weight: 600;
+    line-height: rems(20);
+    margin-bottom: rems(4);
+    padding: rems(10);
+    transition: box-shadow 0.2s ease-out;
+    width: 100%;
+}
+
+
+@mixin input__up {
+    background-color: white;
+    border: rems(1) solid var(--color-grey-light);
+    border-radius: radius(medium);
+    //box-shadow: $shadow__up;
+    color: var(--color-text);
+    font-family: $type__family;
+    font-size: rems(16);
+}
+
+
+@mixin input__down_focus{
+    &:focus{
+        border: rems(1) solid var(--color-form);
+        box-shadow: $shadow__outline;
+        outline: none;
+    }
+}
+
+
+
+@mixin clearfix(){
+    &:before,
+    &:after {
+        content: "";
+        display: table;
+    }
+    &:after {
+        clear: both;
+    }
+}
+
+// @mixin shadows
+// box-shadow: 0 3px 6px 0 rgba(0,0,0,0.10);
+
+
+$type__family: 'Mulish', 'Trebuchet MS', -apple-system, BlinkMacSystemFont, sans-serif;
+
+@keyframes pulse-green {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-green-xdark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(var(--color-green-xdark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-green-xdark-rgb), 0);
+    }
+}
+
+@keyframes pulse-orange {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-orange-xdark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(var(--color-orange-xdark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-orange-xdark-rgb), 0);
+    }
+}
+
+@keyframes pulse-pink {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-pink-xdark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(var(--color-pink-xdark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-pink-xdark-rgb), 0);
+    }
+}
+
+@keyframes pulse-cyan {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-cyan-xdark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(var(--color-cyan-xdark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-cyan-xdark-rgb), 0);
+    }
+}
+@keyframes pulse-magenta {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-magenta-dark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 6px rgba(var(--color-magenta-dark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-magenta-dark-rgb), 0);
+    }
+}
+@keyframes pulse-pumpkin {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-pumpkin-dark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 6px rgba(var(--color-pumpkin-dark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-pumpkin-dark-rgb), 0);
+    }
+}
+@keyframes pulse-pumpkin-bigger {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-pumpkin-dark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 6px rgba(var(--color-pumpkin-dark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-pumpkin-dark-rgb), 0);
+    }
+}
+@keyframes pulse-red-bigger {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-red-dark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 6px rgba(var(--color-red-dark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-red-dark-rgb), 0);
+    }
+}
+@keyframes pulse-green-bigger {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-green-xdark-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 6px rgba(var(--color-green-xdark-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-green-xdark-rgb), 0);
+    }
+}
+@keyframes pulse-grey {
+    0% {
+        transform: scale(1);
+
+        box-shadow: 0 0 0 0 rgba(var(--color-grey-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 6px rgba(var(--color-grey-rgb), 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--color-grey-rgb), 0);
+    }
+}
+@keyframes pulse-grey-shadow {
+  0%, 60%, 100% {
+    box-shadow: 0 rems(2) rems(10) 0 rgba(var(--color-grey-rgb), 0.25);
+    transform: scale(1);
+  }
+  30% {
+    box-shadow: 0 rems(3) rems(16) 0 rgba(var(--color-grey-rgb), 0.45);
+    transform: scale(1.002);
+  }
+}
+

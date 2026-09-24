@@ -1,0 +1,12 @@
+@if (headings().length) {
+  <nav class="toc">
+    <p class="toc__title">On this page</p>
+    <ul class="toc__links">
+      @for (heading of headings(); track heading.id) {
+        <li [class.toc__item--sub]="heading.level === 4">
+          <a [routerLink]="[]" [fragment]="heading.id">{{ heading.text }}</a>
+        </li>
+      }
+    </ul>
+  </nav>
+}

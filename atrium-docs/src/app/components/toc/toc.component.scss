@@ -1,0 +1,49 @@
+@use 'foundation/functions' as fn;
+
+:host {
+  display: contents;
+}
+
+.toc {
+  position: sticky;
+  top: fn.rems(76);
+}
+
+.toc__title {
+  margin: 0 0 fn.rems(12);
+  color: var(--color-grey);
+  font-size: fn.rems(11);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.toc__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--color-grey-light);
+
+  li {
+    margin-bottom: fn.rems(4);
+  }
+
+  a {
+    display: block;
+    padding: fn.rems(6) fn.rems(16);
+    border-left: 2px solid transparent;
+    margin-left: -1px;
+    color: var(--color-grey-dark);
+    font-size: fn.rems(13);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-cyan-dark);
+      border-left-color: var(--color-cyan-dark);
+    }
+  }
+}
+
+.toc__item--sub a {
+  padding-left: fn.rems(28);
+}

@@ -1,0 +1,35 @@
+@use 'foundation/functions' as fn;
+@use 'foundation/mixins' as mx;
+
+.docs-layout {
+  padding: 0 fn.rems(16);
+
+  @include mx.breakpoint(for-tablet-portrait-up) {
+    padding: 0 fn.rems(24) 0 0;
+  }
+}
+
+.docs-layout__content,
+.docs-layout__toc-col {
+  padding: fn.rems(16) fn.rems(16) fn.rems(16) 0;
+
+  @include mx.breakpoint(for-tablet-portrait-up) {
+    padding: fn.rems(24) fn.rems(24) fn.rems(24) 0;
+  }
+}
+
+.docs-layout__content {
+  @include mx.breakpoint(for-tablet-portrait-up) {
+    padding-left: fn.rems(28);
+  }
+}
+
+aside {
+  display: none;
+  background: var(--color-grey-xxlight);
+
+  @include mx.breakpoint(for-tablet-portrait-up) {
+    display: block;
+    border-right: 1px solid #e6e6e6;
+  }
+}

@@ -1,0 +1,36 @@
+@if (sample(); as sample) {
+  <h1 class="sample-page__title">{{ sample.title }}</h1>
+  <p class="sample-page__meta">
+    Language: {{ sample.language }} &middot; Default port: {{ sample.port }} (PORT env override) &middot; Path: {{ sample.path }}
+  </p>
+
+  <h3>Run</h3>
+  <pre class="sample-page__code"><code>{{ sample.runCommand }}</code></pre>
+
+  <p>{{ envVarsNote }}</p>
+  @if (sample.extraNote) {
+    <p>{{ sample.extraNote }}</p>
+  }
+
+  <h3>Endpoints</h3>
+  <p>Same runtime contract as the other hello samples:</p>
+  <ul class="sample-page__endpoints">
+    @for (endpoint of endpoints; track endpoint) {
+      <li><code>{{ endpoint }}</code></li>
+    }
+  </ul>
+
+  <h3>Note</h3>
+  <p>
+    For local Store registration, use <code>manifest.example.json</code>. Signature verification is
+    pinned to the published test vectors in the
+    <a [routerLink]="['/docs', 'calls-coho-makes-to-you']" fragment="3-1-1-signature-test-vectors">app developer spec (&sect;3.1.1)</a>.
+  </p>
+
+  @if (sample.testsCommand) {
+    <h3>Tests</h3>
+    <pre class="sample-page__code"><code>{{ sample.testsCommand }}</code></pre>
+  }
+} @else {
+  <p>Sample not found.</p>
+}

@@ -1,0 +1,71 @@
+<header class="app-header" [class.app-header--scrolled]="scrolled()">
+  <a class="app-header__logo" routerLink="/">COHO</a>
+
+  <span class="app-header__pill app-header__pill--static app-header__version">v1.1</span>
+
+  <button type="button" class="app-header__search" aria-label="Search docs" (click)="openSearch()">
+    <svg-icon class="icon" name="icon-find" color="icon--white" />
+    <span class="app-header__search-label">Search docs</span>
+    <span class="app-header__search-key">{{ searchShortcutLabel }}</span>
+  </button>
+
+  <button type="button" class="app-header__menu-toggle" aria-label="Open navigation menu" (click)="toggleMobileNav()">
+    <svg class="app-header__hamburger-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <rect x="2" y="4" width="16" height="2" rx="1" />
+      <rect x="2" y="9" width="16" height="2" rx="1" />
+      <rect x="2" y="14" width="16" height="2" rx="1" />
+    </svg>
+  </button>
+
+  <div class="app-header__right">
+    <div class="app-header__dropdown">
+      <button type="button" class="app-header__pill" aria-label="App samples" (click)="toggleSamples()">
+        <span class="app-header__pill-label">App samples</span>
+        <svg-icon class="icon" name="arrow-down" color="icon--white" />
+      </button>
+
+      @if (samplesOpen()) {
+        <ul class="app-header__dropdown-panel">
+          @for (sample of samples; track sample.slug) {
+            <li>
+              <a [routerLink]="['/samples', sample.slug]" (click)="closeSamples()">{{ sample.navLabel }}</a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</header>
+
+@if (mobileNavOpen()) {
+  <div class="app-header__mobile-nav">
+    <div class="app-header__mobile-nav-extra">
+      <button type="button" class="app-header__mobile-nav-search" (click)="openSearchFromMobileNav()">
+        <svg-icon class="icon" name="icon-find" color="icon--grey" />
+        Search docs
+      </button>
+
+      <div class="app-header__mobile-samples">
+        <button type="button" class="app-header__mobile-samples-trigger" (click)="toggleSamples()">
+          App samples
+          <svg-icon class="icon" name="arrow-down" color="icon--blue" />
+        </button>
+
+        @if (samplesOpen()) {
+          <ul class="app-header__mobile-samples-list">
+            @for (sample of samples; track sample.slug) {
+              <li>
+                <a [routerLink]="['/samples', sample.slug]" (click)="closeSamples()">{{ sample.navLabel }}</a>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+    <app-sidebar />
+  </div>
+}
+
+@if (searchOpen()) {
+  <app-search-modal (closed)="closeSearch()" />
+}

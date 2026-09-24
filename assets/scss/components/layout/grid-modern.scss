@@ -1,0 +1,155 @@
+@use "../../foundation/functions" as fn;
+@use "../../foundation/mixins" as mx;
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    width: 100%;
+}
+
+.grid--12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.grid-gap-none {
+    gap: 0;
+}
+
+.grid-gap-sm {
+    gap: fn.rems(8);
+}
+
+.grid-gap-md {
+    gap: fn.rems(10);
+}
+
+.grid-gap-lg {
+    gap: fn.rems(20);
+}
+
+.grid-gap-x-none {
+    column-gap: 0;
+}
+
+.grid-gap-x-sm {
+    column-gap: fn.rems(8);
+}
+
+.grid-gap-x-md {
+    column-gap: fn.rems(10);
+}
+
+.grid-gap-x-lg {
+    column-gap: fn.rems(20);
+}
+
+.grid-gap-y-none {
+    row-gap: 0;
+}
+
+.grid-gap-y-sm {
+    row-gap: fn.rems(8);
+}
+
+.grid-gap-y-md {
+    row-gap: fn.rems(10);
+}
+
+.grid-gap-y-lg {
+    row-gap: fn.rems(20);
+}
+
+.grid-span-full {
+    grid-column: 1 / -1;
+}
+
+.grid-start-auto {
+    grid-column-start: auto;
+}
+
+@mixin grid-span-classes($prefix: "") {
+    @for $i from 1 through 12 {
+        .grid-span-#{$prefix}#{$i} {
+            grid-column-end: span $i;
+        }
+    }
+}
+
+@mixin grid-start-classes($prefix: "") {
+    @for $i from 1 through 13 {
+        .grid-start-#{$prefix}#{$i} {
+            grid-column-start: $i;
+        }
+    }
+}
+
+@include grid-span-classes();
+@include grid-start-classes();
+
+@include mx.breakpoint(for-large-phone-up) {
+    @include grid-span-classes("xs-");
+    @include grid-start-classes("xs-");
+}
+
+@include mx.breakpoint(for-large-phone-landscape-up) {
+    @include grid-span-classes("sm-");
+    @include grid-start-classes("sm-");
+}
+
+@include mx.breakpoint(for-tablet-portrait-up) {
+    @include grid-span-classes("md-");
+    @include grid-start-classes("md-");
+}
+
+@include mx.breakpoint(for-tablet-landscape-up) {
+    @include grid-span-classes("lg-");
+    @include grid-start-classes("lg-");
+}
+
+.grid-items-start {
+    align-items: start;
+}
+
+.grid-items-center {
+    align-items: center;
+}
+
+.grid-items-end {
+    align-items: end;
+}
+
+.grid-items-stretch {
+    align-items: stretch;
+}
+
+.grid-justify-start {
+    justify-items: start;
+}
+
+.grid-justify-center {
+    justify-items: center;
+}
+
+.grid-justify-end {
+    justify-items: end;
+}
+
+.grid-justify-stretch {
+    justify-items: stretch;
+}
+
+.grid-self-start {
+    align-self: start;
+}
+
+.grid-self-center {
+    align-self: center;
+}
+
+.grid-self-end {
+    align-self: end;
+}
+
+.grid-self-stretch {
+    align-self: stretch;
+}

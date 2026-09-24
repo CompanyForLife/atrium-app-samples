@@ -1,0 +1,7 @@
+@if (section(); as section) {
+  <p class="doc-page__eyebrow">Section {{ section.number }} of {{ totalSections }}</p>
+  <h1 class="doc-page__title">{{ section.title }}</h1>
+  <div class="doc-page__body" [innerHTML]="safeHtml()"></div>
+} @else {
+  <p>Section not found.</p>
+}

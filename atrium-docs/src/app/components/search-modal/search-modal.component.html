@@ -1,0 +1,30 @@
+<div class="search-modal__backdrop" (click)="onBackdropClick($event)">
+  <div class="search-modal__panel" [class.search-modal__panel--expanded]="query().trim()">
+    <input
+      #searchInput
+      class="search-modal__input"
+      type="text"
+      placeholder="Search docs..."
+      [value]="query()"
+      (input)="onInput($event)"
+      (keydown.escape)="close()"
+    />
+
+    @if (query().trim()) {
+      @if (results().length) {
+        <ul class="search-modal__results">
+          @for (entry of results(); track entry.title + entry.subtitle) {
+            <li>
+              <button type="button" (click)="select(entry)">
+                <span class="search-modal__result-title">{{ entry.title }}</span>
+                <span class="search-modal__result-subtitle">{{ entry.subtitle }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="search-modal__empty">No results for "{{ query() }}"</p>
+      }
+    }
+  </div>
+</div>
