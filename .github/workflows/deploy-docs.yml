@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - working-directory: atrium-docs
-        run: npm run build
+        run: npm run build -- --base-href /atrium-app-samples/
 
       - uses: actions/configure-pages@v5
 
