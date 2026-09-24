@@ -1,7 +1,15 @@
 @use 'foundation/functions' as fn;
 @use 'foundation/mixins' as mx;
 
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
 .docs-layout {
+  flex: 1;
+  width: 100%;
   max-width: fn.rems(1200);
   margin: 0 auto;
   padding: 0 fn.rems(16);
