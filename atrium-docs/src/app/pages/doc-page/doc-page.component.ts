@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ViewEncapsulation, computed, effect, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, Title } from '@angular/platform-browser';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -12,6 +12,7 @@ const TOTAL_SECTIONS = SECTIONS.length;
 
 @Component({
     selector: 'app-doc-page',
+    imports: [RouterLink],
     templateUrl: './doc-page.component.html',
     styleUrl: './doc-page.component.scss',
     encapsulation: ViewEncapsulation.None
@@ -32,6 +33,16 @@ export class DocPageComponent {
     protected readonly section = computed<SpecSection | undefined>(() =>
         SECTIONS.find(section => section.slug === this.slug())
     );
+
+    protected readonly previousSection = computed<SpecSection | undefined>(() => {
+        const current = this.section();
+        return current ? SECTIONS.find(s => s.number === current.number - 1) : undefined;
+    });
+
+    protected readonly nextSection = computed<SpecSection | undefined>(() => {
+        const current = this.section();
+        return current ? SECTIONS.find(s => s.number === current.number + 1) : undefined;
+    });
 
     protected readonly safeHtml = computed(() => {
         const section = this.section();

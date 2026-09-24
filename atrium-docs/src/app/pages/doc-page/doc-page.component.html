@@ -2,6 +2,24 @@
   <p class="doc-page__eyebrow">Section {{ section.number }} of {{ totalSections }}</p>
   <h1 class="doc-page__title">{{ section.title }}</h1>
   <div class="doc-page__body" [innerHTML]="safeHtml()"></div>
+
+  <nav class="doc-page__pagination">
+    @if (previousSection(); as previous) {
+      <a class="doc-page__pagination-link doc-page__pagination-link--previous" [routerLink]="['/docs', previous.slug]">
+        <span class="doc-page__pagination-label">Previous</span>
+        <span class="doc-page__pagination-title">{{ previous.title }}</span>
+      </a>
+    } @else {
+      <span></span>
+    }
+
+    @if (nextSection(); as next) {
+      <a class="doc-page__pagination-link doc-page__pagination-link--next" [routerLink]="['/docs', next.slug]">
+        <span class="doc-page__pagination-label">Next</span>
+        <span class="doc-page__pagination-title">{{ next.title }}</span>
+      </a>
+    }
+  </nav>
 } @else {
   <p>Section not found.</p>
 }
