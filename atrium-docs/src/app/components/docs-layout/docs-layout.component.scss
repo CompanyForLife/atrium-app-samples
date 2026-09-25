@@ -36,11 +36,21 @@
 
 aside {
   display: none;
+  position: relative;
   background: var(--color-grey-xxlight);
 
   @include mx.breakpoint(for-tablet-portrait-up) {
     display: block;
     border-right: 1px solid #e6e6e6;
-    box-shadow: -100vw 0 0 var(--color-grey-xxlight);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      background: var(--color-grey-xxlight);
+    }
   }
 }
