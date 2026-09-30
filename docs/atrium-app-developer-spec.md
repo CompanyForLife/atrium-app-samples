@@ -103,7 +103,7 @@ Signed string (UTF-8): `{t}.{METHOD}.{pathAndQuery}.{connectionReference}.{rawBo
 - `METHOD` is uppercase (`GET`, `POST`, `PUT`).
 - `pathAndQuery` is the request path plus query string, **without** `atriumSignature` (do not reorder other params).
 - `connectionReference` is the connection Guid, also sent as `X-Atrium-Connection-Reference` (iframe loads put it on the query string instead of a header).
-- HMAC-SHA256 with the connection **signing secret** from setup, except `lifecycle.setup`, which uses the out-of-band bootstrap secret described below (never the Public API bearer token).
+- HMAC-SHA256 with the connection **signing secret** from setup, except `lifecycle.setup`, which uses your app's **setup secret** described below (never the Public API bearer token).
 - Reject timestamps more than **30 seconds in the future**. Reject timestamps more than **300 seconds in the past**.
 
 Three details cause most verification bugs:
@@ -114,7 +114,7 @@ Three details cause most verification bugs:
 
 #### 3.1.1 Signature test vectors
 
-Assert against these before you trust your implementation. Secret `atrium_test_secret`, timestamp `1767225600`, connection `11111111-1111-1111-1111-111111111111`, so the header is `t=1767225600,v1=<expected>`. For the setup row, treat this as the bootstrap secret; for later rows, treat it as the connection signing secret.
+Assert against these before you trust your implementation. Secret `atrium_test_secret`, timestamp `1767225600`, connection `11111111-1111-1111-1111-111111111111`, so the header is `t=1767225600,v1=<expected>`. For the setup row, treat this as the app's setup secret; for later rows, treat it as the connection signing secret.
 
 | METHOD | pathAndQuery | Raw body | Expected `v1` |
 |---|---|---|---|
@@ -154,13 +154,17 @@ Disconnect may still be attempted while paused.
 
 ### 3.2 `lifecycle.setup` — app connected
 
-COHO signs `lifecycle.setup` with an out-of-band **setup bootstrap secret**. Your process must verify that signature **before** accepting or storing anything from the request. Never authenticate setup with `data.signingSecret`: that value is untrusted until bootstrap verification succeeds.
+COHO signs `lifecycle.setup` with your app's **setup secret**. Your process must verify that signature **before** accepting or storing anything from the request. Never authenticate setup with `data.signingSecret`: that value is untrusted until setup verification succeeds.
 
-Read the bootstrap secret from the environment as `ATRIUM_SETUP_SECRET` (the hello samples and Hosting task definition use that name).
+Read the setup secret from the environment as `ATRIUM_SETUP_SECRET` (the hello samples, the Node kit, and the Hosting task definition use that name).
 
-**You do not create, rotate, or request this value.** On Atrium Hosting, COHO injects `ATRIUM_SETUP_SECRET` into your task automatically. For self-hosted connect against a COHO environment, COHO supplies the same platform value out of band when you are cleared to connect — it is not a per-app secret and is not shown in the Store UI.
+**Where it comes from.** COHO mints a setup secret **per app** when the app is registered and shows it **once** in the create response (Store UI, publisher portal, Public API v1.1, and MCP registration all return it). It is never shown again on a later read.
 
-The bootstrap secret is only for setup. After successful setup, verify config, quick-view, lifecycle, schedule, and event requests with the per-connection `data.signingSecret`.
+- **Self-hosted (external URL) and Draft apps:** copy the value when you register and set it as `ATRIUM_SETUP_SECRET` on your service before connecting. Draft apps receive it alongside the one-time API key and signing secret.
+- **Atrium Hosting:** COHO injects `ATRIUM_SETUP_SECRET` into your task automatically on every provision. You only need a copy if you also run the same build somewhere else.
+- **Lost or leaked:** the app owner can **regenerate** it from My apps (org Store) or the publisher portal. The old value stops working immediately; hosted apps are re-provisioned with the new value; self-hosted apps must update their environment before the next connect. Regeneration does not affect connections that already completed setup.
+
+The setup secret is only for setup, and only your app's setup — it cannot verify or forge setup for any other app. After successful setup, verify config, quick-view, lifecycle, schedule, and event requests with the per-connection `data.signingSecret`.
 
 `data`:
 
@@ -545,17 +549,17 @@ Samples target **self-host**. Atrium Hosting (COHO runs your image) is documente
 
 **Preferred (draft key first):**
 
-1. In a feature-flagged Store org, register a **Draft** app (name only). Copy the one-time API key, signing secret, API base URL, and connection reference.
+1. In a feature-flagged Store org, register a **Draft** app (name only). Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret.
 2. Build your app against that Public API key (no temporary org key).
-3. Serve `/health` and the lifecycle paths locally; expose HTTPS if the API cannot reach localhost (tunnel).
-4. On **My apps**, set the Base URL to activate — COHO POSTs `lifecycle.setup` with the same credentials; persist the signing secret if your process did not already hold it.
+3. Serve `/health` and the lifecycle paths locally with `ATRIUM_SETUP_SECRET` set to the copied setup secret; expose HTTPS if the API cannot reach localhost (tunnel).
+4. On **My apps**, set the Base URL to activate — COHO POSTs `lifecycle.setup` (signed with your setup secret) with the same credentials; persist the signing secret if your process did not already hold it.
 5. Confirm health, a test event or a real `tenancy.started`, logs in the Store, then disconnect when done.
 
 **Classic (URL first):**
 
 1. Serve your app on localhost with `/health` and the lifecycle paths.
 2. Expose HTTPS if the API cannot reach localhost (tunnel).
-3. Register a **private** external app: name + base URL + manifest.
+3. Register a **private** external app: name + base URL + manifest. Copy the one-time setup secret and restart your app with it as `ATRIUM_SETUP_SECRET`.
 4. Connect — you must receive `lifecycle.setup` and persist secrets.
 5. Confirm health, a test event or a real `tenancy.started`, logs in the Store, then disconnect.
 

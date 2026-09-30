@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-30 — per-app setup secret
+
+- COHO mints a setup secret per app at registration and shows it once. Self-hosted and draft apps copy it into `ATRIUM_SETUP_SECRET` before connect. Atrium Hosting injects it.
+- Lost or leaked secrets are regenerated from My apps or the publisher portal. The old value stops immediately.
+- Republish developer spec and hello sample READMEs
+
 ## 2026-09-30 — setup bootstrap secret wording
 
 - Clarify that `ATRIUM_SETUP_SECRET` is COHO platform config: Hosting injects it; builders do not create, rotate, or request the value
