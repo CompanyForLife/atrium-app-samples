@@ -6,13 +6,13 @@ This is the pack to send an app developer (or their AI). It is the external cont
 
 Before a **public** catalogue listing, COHO will ask you to pass a quality-gate checklist (shared separately at listing time). Private org apps only need this runtime contract.
 
-**Not in this spec:** Hosting internals (how COHO builds and runs your image on its fleet), COHO CLI, listing review UI, billing, or how COHO staffs its own seed apps. Registering and updating hosted or self-hosted apps via Public API or MCP **is** in scope below.
+**Not in this spec:** Atrium Hosting (how COHO runs your image), COHO CLI, listing review UI, billing, or how COHO staffs its own seed apps.
 
 ---
 
 ## 1. What an Atrium app is
 
-An Atrium app is an **HTTPS service you run** (yourself, or on COHO Hosting). COHO never contains your business logic.
+An Atrium app is an **HTTPS service you run** (yourself, or later on Atrium Hosting). COHO never contains your business logic.
 
 ```text
 Manager connects the app in the Store
@@ -67,7 +67,7 @@ registered **base URL**. Browser-facing paths are relative to
 | `health.path` | Unsigned `GET`. See §4. |
 | `triggers.lifecycle.setupPath` | Signed `POST` on connect. **Must return 2xx** or connect rolls back. |
 | `triggers.lifecycle.disconnectPath` | Signed `POST` after credentials are revoked (best-effort). Delete org-scoped data. |
-| `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. Each entry: `key`, `cron` (5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges, steps), `timezone` (IANA, default UTC), `path`. |
+| `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. Each entry: `key`, `cron` (5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges, steps), `timezone` (IANA, default UTC), `path`. **Private / unreviewed apps:** at most 4 schedules, and no denser than hourly (minute field must be a single value). Reviewed public listings are not capped this way. |
 | `triggers.events` | Opt-in. Unknown keys are ignored until COHO supports them. |
 | `requestedCapabilities` | Public API capability names you intend to use (honesty in the Store). See §8. |
 | `config.schemaPath` / `getPath` / `putPath` | App-owned light config. Store proxies signed GET/PUT. Omit or unused if you have no prefs. |
@@ -143,7 +143,7 @@ Return **HTTP 2xx** quickly. Do long work asynchronously. Treat `deliveryId` as 
 | Your status | COHO |
 |---|---|
 | `2xx` | Success |
-| Timeout, `408`, `429`, `5xx` | Retry with backoff, then dead-letter |
+| Timeout, `408`, `429`, `5xx` | Retry with backoff, then dead-letter. On `429`, COHO honours your `Retry-After` (capped at 60s) |
 | `401` / `403` / `400` | No retry |
 | `404` on **setup** | Connect fails and rolls back |
 
@@ -154,7 +154,11 @@ Disconnect may still be attempted while paused.
 
 ### 3.2 `lifecycle.setup` — app connected
 
-Before COHO connects an app, its deployment must hold the out-of-band setup bootstrap secret as `ATRIUM_SETUP_SECRET`. COHO signs `lifecycle.setup` with that bootstrap secret. Verify it **before** accepting or storing anything from the request. Never authenticate setup with `data.signingSecret`: that value is untrusted until bootstrap verification succeeds.
+COHO signs `lifecycle.setup` with an out-of-band **setup bootstrap secret**. Your process must verify that signature **before** accepting or storing anything from the request. Never authenticate setup with `data.signingSecret`: that value is untrusted until bootstrap verification succeeds.
+
+Read the bootstrap secret from the environment as `ATRIUM_SETUP_SECRET` (the hello samples and Hosting task definition use that name).
+
+**You do not create, rotate, or request this value.** On Atrium Hosting, COHO injects `ATRIUM_SETUP_SECRET` into your task automatically. For self-hosted connect against a COHO environment, COHO supplies the same platform value out of band when you are cleared to connect — it is not a per-app secret and is not shown in the Store UI.
 
 The bootstrap secret is only for setup. After successful setup, verify config, quick-view, lifecycle, schedule, and event requests with the per-connection `data.signingSecret`.
 
@@ -412,51 +416,26 @@ COHO validates the schema when it is loaded and validates config against that sa
 
 ### 5.4 MCP (AI access)
 
-MCP is a capability of COHO Atrium, not a separately named product. Managers (and partner publishers) connect an MCP client such as Cursor through their COHO account. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
+MCP is a capability of COHO Atrium, not a separately named product. Managers connect Claude (or similar) through their COHO account. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
 
-Production MCP endpoint: `https://mcp.coho.life/mcp` (OAuth via the COHO API). The session binds to **one** organisation. Tools always act on that linked org — confirm with `get_organisation_summary` / `list_managed_atrium_apps` before create. Shared demo reference strings can map to different org rows; use the org your MCP session is actually linked to.
+Registering and updating hosted apps is available over MCP. **Connecting GitHub is not** — it is an OAuth-style install that has to happen in a browser, so it stays a Store / publisher-portal action (§5.5). Once GitHub is connected, MCP registration of a private repository works exactly like a public one.
 
-#### Organisation tools (manager session)
+### 5.5 Private GitHub sources (Atrium Hosting)
 
-| Goal | Tool | Notes |
-|---|---|---|
-| List apps this org owns | `list_managed_atrium_apps` | Not the public catalogue. Watch `ProvisioningState` for hosted apps. |
-| Browse Store catalogue | `list_atrium_catalogue` | Public listed apps plus this org's private apps. |
-| Register self-hosted | `create_atrium_external_app` | Supply `baseUrl` + `manifestJson` (or fields the tool accepts). |
-| Register COHO-hosted | `create_atrium_hosted_app` | `sourceType` `zip` or `github`; queues provision (same pipeline as Store **Build an app**). |
-| Update listing / manifest | `update_atrium_app_listing` | Name, descriptions, self-host `baseUrl`, `manifestJson`. Does **not** rebuild a hosted image. |
-| Reprovision hosted source | `update_atrium_hosted_app` | New zip key or GitHub URL/ref; requeues provision. |
+Atrium Hosting can build from a **private** GitHub repository. COHO never holds a personal access token or deploy key: access comes from a GitHub App installation that you control and can revoke from GitHub at any time.
 
-Create / update tools that take `confirmed` must be previewed with `confirmed: false`, then re-run with `confirmed: true` only after an explicit human OK in the chat. Agents must not set `confirmed: true` on their own.
+1. In the Store (managers) or the publisher portal (publishers), choose **GitHub repository** as the source and select **Connect GitHub**.
+2. GitHub asks which account and which repositories to grant. Grant only the repositories you want COHO to build.
+3. You are returned to COHO and the connection is recorded against your organisation or publisher account. One connection covers every hosted app you own.
 
-**Connect is not an MCP tool yet.** After a hosted app reaches `ready`, connect from the Store (My apps) so COHO POSTs `lifecycle.setup`. Setup must return 2xx or connect rolls back.
+What this means in practice:
 
-#### Hosted zip flow (organisation)
+- Register or update the app with the plain `https://github.com/<org>/<repo>` URL. There is no separate "private" flag.
+- Each build mints a fresh, short-lived token from the installation. Nothing long-lived is stored, and the token never reaches your image.
+- Uninstalling the App, suspending it, or removing a repository from the installation stops future builds of anything that needs it. Already-running apps keep running; the next provision fails with a message telling you to reconnect.
+- Public repositories still work with no connection at all.
 
-1. Build a zip whose Dockerfile path is valid from the archive root. Exclude `node_modules` and `.git`. Include a lockfile when the Dockerfile runs `npm ci`. The process must listen on the Hosting contract port (hello samples use `8080`).
-2. `get_presigned_upload_url` with `filename` and `fileType: application/zip`.
-3. `PUT` the zip bytes to the returned `PresignedUrl` with `Content-Type: application/zip`. Keep `Key` as `sourceLocator`.
-4. `create_atrium_hosted_app` with `sourceType: zip`, that `sourceLocator`, `dockerfilePath` relative to the zip root, optional `manifestJson`, and `requestPublicListing: false` for a private draft (preview with `confirmed: false` first).
-5. Poll `list_managed_atrium_apps` until `ProvisioningState` is `ready` (or `failed`). Typical states: queued → fetching → building → pushing_image → deploying → ready.
-6. Connect in the Store, then confirm `/health` on the minted browser host if the app has browser UI.
-
-GitHub source uses the same create/update tools with a public HTTPS repository URL and optional `sourceRef`. Listing-only changes (copy, `openPresentation`, paths) use `update_atrium_app_listing` without a rebuild. To replace the running image, upload a new zip (or change GitHub ref) and call `update_atrium_hosted_app`.
-
-Example zip layout when shipping a hello sample from this pack:
-
-```text
-samples/hello-node/
-  Dockerfile
-  package.json
-  package-lock.json
-  …
-```
-
-`dockerfilePath` example: `samples/hello-node/Dockerfile`.
-
-#### Partner publisher tools
-
-Partners with an Atrium developer session use the publisher variants (`list_publisher_atrium_apps`, `create_publisher_atrium_external_app`, `create_publisher_atrium_hosted_app`, `update_publisher_atrium_app_listing`, `update_publisher_atrium_hosted_app`). Those register public-intent submissions (typically `in_review`). Partner **public API** keys are not shipped yet — manage + MCP only for publishers.
+COHO reads only repository contents and metadata. It does not subscribe to push events, so pushing to your repository does **not** trigger a deploy — you still update the app explicitly.
 
 ---
 
@@ -511,7 +490,7 @@ connection-specific UI. Full user SSO remains a later extension.
 |---|---|---|
 | Public API (`public-api` policy) | 100 requests / minute | Client IP |
 | MCP (`X-Coho-Api-Client` only) | 100 requests / minute | User id, else IP |
-| COHO → your app | Retries on `429`; then dead-letter | Per delivery |
+| COHO → your app | Retries on `429` (honours `Retry-After`, capped at 60s); then dead-letter | Per delivery |
 
 There is **no per-connection Atrium quota** yet. Do not assume a private bucket. HTTP `429` from Public API should be retried with backoff, same as COHO retries `429` from you.
 
@@ -524,7 +503,7 @@ WAF/IP blocks on the public API hostname still apply. Auth endpoints and Find-a-
 At connect, COHO mints a **normal Public API key** for this connection (interim). It is revoked on disconnect. It is **not** a fake manager user (`ATRIUM_USER` is not the model).
 
 - Declare `requestedCapabilities` for what you actually call.
-- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`, `rentPayments`. Missing flag → HTTP 403.
+- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`, `rentPayments`. Missing flag → HTTP 403. See [public-api-endpoints.md](public-api-endpoints.md).
 - The Store shows requested, granted, pending, and unsupported capabilities.
 - A manifest update never expands an existing key automatically. Existing grants keep working and
   newly requested T3 calls return `403` until an unrestricted manager reviews and approves the exact
@@ -533,6 +512,7 @@ At connect, COHO mints a **normal Public API key** for this connection (interim)
   It does not rotate credentials or rerun `lifecycle.setup`. Disconnect/connect remains the
   credential-rotation path.
 - Capability removal is not automatic. A future explicit downgrade/revoke flow owns that case.
+- **Store-connect scopes** (manager-accepted catalogue scopes on the key) are the destination; they are not this spec. Until then, treat capability flags as the honesty layer, not a full OAuth consent screen.
 
 You cannot outrun the connecting manager's organisation permissions. If they cannot send a tenant message, neither can a key minted for their org in that area once real scopes land.
 
@@ -557,11 +537,11 @@ We deliberately do not ship a dependency for this. The runtime contract is a few
 
 Start from a hello sample. Richer demo apps (schedules, persistence beyond the sample state file, real product workflows) may exist for COHO dogfooding; they are not part of the supported external starter set.
 
-Samples target **self-host** first. To have COHO build and run your image, register a hosted app via Store, Public API (§5.2), or MCP (§5.4).
+Samples target **self-host**. Atrium Hosting (COHO runs your image) is documented separately when you need it; if your source lives in a private repository, see §5.5.
 
 ---
 
-## 10. Local loop (self-host)
+## 10. Local loop (until Hosting exists)
 
 **Preferred (draft key first):**
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-30 — setup bootstrap secret wording
+
+- Clarify that `ATRIUM_SETUP_SECRET` is COHO platform config: Hosting injects it; builders do not create, rotate, or request the value
+- Republish developer spec + hello sample READMEs from HouseShare SoT
+
 ## 2026-09-23 — runtime contract snapshot
 
 - Fuller `triggers.schedules` field notes (`key`, `cron`, `timezone`, `path`)

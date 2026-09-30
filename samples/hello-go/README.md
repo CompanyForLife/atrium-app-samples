@@ -10,7 +10,7 @@ Default port: **5102** (`PORT` env override).
 go run .
 ```
 
-`ATRIUM_SETUP_SECRET` is required for connect. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts. Set `ATRIUM_FRAME_ANCESTORS` to the COHO origin allowed to embed `/ui`, and set `ATRIUM_PARENT_ORIGIN` to that exact origin for the close message (for example `http://localhost:4200` in local development).
+Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. On Atrium Hosting, COHO injects that env var — do not ask for the value. For self-hosted connect, COHO supplies it out of band when you are cleared to connect. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts. Set `ATRIUM_FRAME_ANCESTORS` to the COHO origin allowed to embed `/ui`, and set `ATRIUM_PARENT_ORIGIN` to that exact origin for the close message (for example `http://localhost:4200` in local development).
 
 ## Endpoints
 
