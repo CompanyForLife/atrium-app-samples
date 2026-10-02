@@ -26,6 +26,8 @@ For local Store registration, use [`manifest.example.json`](./manifest.example.j
 
 Signature verification is pinned to the published test vectors in the [app developer spec](../../docs/atrium-app-developer-spec.md#311-signature-test-vectors).
 
+If you add a Dockerfile for **Atrium Hosting**, do not leave the Microsoft aspnet `USER app` at its default UID **1654**. Hosting mounts `/data` as UID/GID **65532** — see [app developer spec §5.6](../../docs/atrium-app-developer-spec.md#56-dockerfile-contract-atrium-hosting).
+
 ## Tests
 
 ```bash

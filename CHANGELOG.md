@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-02 — Atrium Hosting Dockerfile UID contract
+
+- Developer spec §5.6: hosted images must run as UID/GID `65532` (EFS `/data` access point). Documents aspnet default UID `1654` failure mode.
+- hello-dotnet README points authors at §5.6 when adding a Hosting Dockerfile.
+- Republish developer spec and hello samples from HouseShare SoT
+
 ## 2026-09-30 — per-app setup secret
 
 - COHO mints a setup secret per app at registration and shows it once. Self-hosted and draft apps copy it into `ATRIUM_SETUP_SECRET` before connect. Atrium Hosting injects it.

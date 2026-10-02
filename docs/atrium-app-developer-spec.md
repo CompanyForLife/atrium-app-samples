@@ -6,7 +6,7 @@ This is the pack to send an app developer (or their AI). It is the external cont
 
 Before a **public** catalogue listing, COHO will ask you to pass a quality-gate checklist (shared separately at listing time). Private org apps only need this runtime contract.
 
-**Not in this spec:** Atrium Hosting (how COHO runs your image), COHO CLI, listing review UI, billing, or how COHO staffs its own seed apps.
+**Not in this spec:** COHO CLI, listing review UI, billing, how COHO staffs its own seed apps, or the internals of the Hosting control plane (ECS / ALB / provisioner). If COHO runs your image, the Dockerfile contract is §5.6.
 
 ---
 
@@ -48,7 +48,7 @@ registered **base URL**. Browser-facing paths are relative to
     "quickViewPath": null,
     "openPresentation": null
   },
-  "requestedCapabilities": ["conversations"],
+  "requestedCapabilities": ["conversations.read", "conversations.write"],
   "triggers": {
     "lifecycle": {
       "setupPath": "/webhooks/atrium/setup",
@@ -69,7 +69,7 @@ registered **base URL**. Browser-facing paths are relative to
 | `triggers.lifecycle.disconnectPath` | Signed `POST` after credentials are revoked (best-effort). Delete org-scoped data. |
 | `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. Each entry: `key`, `cron` (5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges, steps), `timezone` (IANA, default UTC), `path`. **Private / unreviewed apps:** at most 4 schedules, and no denser than hourly (minute field must be a single value). Reviewed public listings are not capped this way. |
 | `triggers.events` | Opt-in. Unknown keys are ignored until COHO supports them. |
-| `requestedCapabilities` | Public API capability names you intend to use (honesty in the Store). See §8. |
+| `requestedCapabilities` | Catalogue scope ids the app requires (e.g. `conversations.write`). Legacy short names still expand. Connect fails if the connecting person cannot grant every resolved scope. See §8. |
 | `config.schemaPath` / `getPath` / `putPath` | App-owned light config. Store proxies signed GET/PUT. Omit or unused if you have no prefs. |
 | `config.browserBaseUrl` | Public HTTPS origin for hosted app UI. Runtime webhooks and config remain on the private registered base URL. |
 | `config.externalConfigureUrl` | Optional new-tab configure path on the browser base URL. |
@@ -441,6 +441,24 @@ What this means in practice:
 
 COHO reads only repository contents and metadata. It does not subscribe to push events, so pushing to your repository does **not** trigger a deploy — you still update the app explicitly.
 
+### 5.6 Dockerfile contract (Atrium Hosting)
+
+When the Store registers your app as **COHO-hosted**, CodeBuild builds your repository's Dockerfile and runs the image on Atrium Hosting. The runtime contract in §§3–5 still applies. On top of that, the image must satisfy:
+
+| Requirement | Detail |
+|---|---|
+| Platform | `linux/amd64` (Hosting builds with `--platform linux/amd64`). |
+| Listen port | Honour `PORT`. Hosting sets `PORT=8080` and maps container port `8080`. Listening on both your local default and `8080` is fine. |
+| Data directory | Persist under `ATRIUM_DATA_DIR` (Hosting sets `/data`). That path is an EFS mount and must survive re-provision. |
+| Process UID/GID | Run as **UID 65532 and GID 65532**. Hosting creates the `/data` EFS access point as `65532:65532`. |
+| Setup secret | Read `ATRIUM_SETUP_SECRET` from the environment. Hosting injects it; do not bake it into the image. |
+
+**Why 65532 matters:** if the process runs as another UID (for example the Microsoft aspnet image's built-in `app` user at UID **1654**), ECS fails before your process starts with `CannotCreateContainerError` / `lchown ... operation not permitted` on the `/data` volume. Provision then sits on Deploying until it times out as Failed. Remap or create the runtime user as `65532:65532` and `chown` `/data` to that user in the Dockerfile.
+
+`samples/hello-go` already uses distroless `nonroot` (65532). A .NET aspnet Dockerfile must not leave `USER app` at the image default UID.
+
+Self-hosted apps ignore this section — you own the process and the disk.
+
 ---
 
 ## 6. How the app appears in COHO
@@ -504,21 +522,16 @@ WAF/IP blocks on the public API hostname still apply. Auth endpoints and Find-a-
 
 ## 8. Permissions (high level)
 
-At connect, COHO mints a **normal Public API key** for this connection (interim). It is revoked on disconnect. It is **not** a fake manager user (`ATRIUM_USER` is not the model).
+At connect, COHO mints a **machine principal** credential (`AppConnection`) for this connection — a Public API key backed by a private role holding exactly the requested catalogue scopes. It is revoked on disconnect. It is **not** a fake manager user (`ATRIUM_USER` is not the model).
 
-- Declare `requestedCapabilities` for what you actually call.
-- High-risk (T3) Public API areas already need extra flags on the key, for example `conversations`, `settlements`, `transactionMatching`, `calendarDestructive`, `supplierArchive`, `rentPayments`. Missing flag → HTTP 403. See [public-api-endpoints.md](public-api-endpoints.md).
-- The Store shows requested, granted, pending, and unsupported capabilities.
-- A manifest update never expands an existing key automatically. Existing grants keep working and
-  newly requested T3 calls return `403` until an unrestricted manager reviews and approves the exact
-  additive delta in Store.
-- Approval updates the existing key in place, is audited, and takes effect on the next API request.
-  It does not rotate credentials or rerun `lifecycle.setup`. Disconnect/connect remains the
-  credential-rotation path.
-- Capability removal is not automatic. A future explicit downgrade/revoke flow owns that case.
-- **Store-connect scopes** (manager-accepted catalogue scopes on the key) are the destination; they are not this spec. Until then, treat capability flags as the honesty layer, not a full OAuth consent screen.
+- Declare `requestedCapabilities` as catalogue scope ids (e.g. `conversations.write`, `tenants.read`). Legacy short names (`conversations`, `settlements`, …) still expand.
+- Connect fails if the connecting person cannot grant every resolved scope. The credential is minted with exactly that set.
+- The Store shows requested, granted, pending, and unsupported scopes.
+- A manifest update never expands an existing key automatically. Existing grants keep working and newly requested calls return `403` until a manager who can grant those scopes reviews and approves the exact additive delta in Store.
+- Approval updates the existing key's role in place, is audited, and takes effect on the next API request. It does not rotate credentials or rerun `lifecycle.setup`. Disconnect/connect remains the credential-rotation path.
+- Scope removal is not automatic. A future explicit downgrade/revoke flow owns that case.
 
-You cannot outrun the connecting manager's organisation permissions. If they cannot send a tenant message, neither can a key minted for their org in that area once real scopes land.
+You cannot outrun the connecting manager's organisation permissions. If they cannot send a tenant message, neither can a key they mint for their org.
 
 ---
 
@@ -541,7 +554,7 @@ We deliberately do not ship a dependency for this. The runtime contract is a few
 
 Start from a hello sample. Richer demo apps (schedules, persistence beyond the sample state file, real product workflows) may exist for COHO dogfooding; they are not part of the supported external starter set.
 
-Samples target **self-host**. Atrium Hosting (COHO runs your image) is documented separately when you need it; if your source lives in a private repository, see §5.5.
+Samples target **self-host** by default. If COHO runs your image on Atrium Hosting, follow the Dockerfile contract in §5.6; if your source lives in a private repository, see §5.5.
 
 ---
 
