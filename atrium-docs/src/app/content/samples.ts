@@ -12,9 +12,9 @@ export interface SampleContent {
 
 const ENV_VARS_PARAGRAPH =
     'ATRIUM_SETUP_SECRET is required for connect. Set ATRIUM_DATA_DIR to persist ' +
-    'connection secrets and config across restarts. Set ATRIUM_FRAME_ANCESTORS to the ' +
-    'COHO origin allowed to embed /ui, and set ATRIUM_PARENT_ORIGIN to that exact origin ' +
-    'for the close message (for example http://localhost:4200 in local development).';
+    'connection secrets and config across restarts. On Atrium Hosting, COHO injects ' +
+    'ATRIUM_FRAME_ANCESTORS and ATRIUM_PARENT_ORIGIN (one Store origin per environment). ' +
+    'Locally, fall back to http://localhost:4200 when those are unset.';
 
 export const SAMPLES: SampleContent[] = [
     {

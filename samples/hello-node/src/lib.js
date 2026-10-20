@@ -152,9 +152,26 @@ export function loadSecret(connectionReference) {
   return loadConnection(connectionReference)?.signingSecret;
 }
 
+export const DEFAULT_FRAME_ANCESTORS =
+  'http://localhost:4200';
+
+function uniqueAncestorTokens(...lists) {
+  const seen = new Set();
+  const out = [];
+  for (const list of lists) {
+    for (const token of String(list || '').split(/\s+/)) {
+      if (!token || seen.has(token)) continue;
+      seen.add(token);
+      out.push(token);
+    }
+  }
+  return out.join(' ');
+}
+
 export function sanitizeFrameAncestors(value) {
   const trimmed = String(value ?? '').trim();
-  if (!trimmed) return "'none'";
+  const noneOnly = trimmed && trimmed.split(/\s+/).every((tok) => tok === "'none'");
+  let safe = true;
   for (const character of trimmed) {
     const code = character.codePointAt(0) ?? 0;
     const isAlphaNumeric =
@@ -163,10 +180,15 @@ export function sanitizeFrameAncestors(value) {
       (code >= 97 && code <= 122);
     const isPunctuation = " '*.:/-_".includes(character);
     if (!isAlphaNumeric && !isPunctuation) {
-      return "'none'";
+      safe = false;
+      break;
     }
   }
-  return trimmed;
+  const parent = process.env.ATRIUM_PARENT_ORIGIN ? parentOrigin() : '';
+  if (!trimmed || noneOnly || !safe) {
+    return uniqueAncestorTokens(DEFAULT_FRAME_ANCESTORS, parent);
+  }
+  return uniqueAncestorTokens(trimmed, parent);
 }
 
 export function parentOrigin() {

@@ -1,7 +1,6 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /src
-COPY samples/atrium/hello-go/go.mod ./
-COPY samples/atrium/hello-go/main.go ./
+COPY go.mod main.go ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /hello-go . \
     && mkdir /data
 
