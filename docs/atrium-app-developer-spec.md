@@ -547,7 +547,7 @@ signed launch URL (`GET`, empty body) with:
 | Query | Role |
 |---|---|
 | `connectionReference` | Which org connection opened |
-| `atriumUsageToken` | Short-lived JWT: signed-in **person + organisation + connection** (≈15 minutes). Use as `Authorization: Bearer` for interactive Public API calls. |
+| `atriumUsageToken` | Short-lived JWT: signed-in **person + organisation + connection** (≈15 minutes). Use as `Authorization: Bearer` for interactive Public API calls. Remint while open via the postMessage bridge — do not treat expiry as “close the app”. |
 | `theme` | Opening manager's COHO UI theme: `light` or `dark` (from persisted `User.DarkMode`, not OS preference). Covered by `atriumSignature` — use for first paint. |
 | `atriumSignature` | HMAC over the launch GET (same scheme as other signed GETs) |
 
@@ -559,6 +559,7 @@ You must:
 - Treat the page as **third-party chrome** — no requirement to match COHO CSS.
 - Never put the API key or signing secret in the query string. The launch signature is not a substitute for checking method, path, and connection.
 - For interactive UI calls, prefer `Authorization: Bearer <atriumUsageToken>`. Effective scopes are **connection grant ∩ opening person's role**. Keep the connection API key for background/webhooks only.
+- Keep the Bearer fresh for as long as the quick view stays open: listen for COHO remints and update your client. You cannot mint a usage token yourself.
 
 Thin `postMessage` bridge (parent is COHO):
 
@@ -567,10 +568,13 @@ Thin `postMessage` bridge (parent is COHO):
 | `atrium.quickView.close` | app → COHO | Close the shell |
 | `atrium.quickView.ready` | app → COHO | Optional. Ask the host to (re)send theme after your page boots. |
 | `atrium.quickView.theme` | COHO → app | `{ theme: "light" \| "dark" }`. Sent on iframe load, on `ready`, and when the manager toggles dark mode while the shell is open. |
+| `atrium.usageToken.refresh` | app → COHO | Ask COHO to remint a usage JWT (optional `requestId`) |
+| `atrium.usageToken` | COHO → app | Fresh `{ atriumUsageToken, expiresAt }` (optional `requestId`) — keep iframe state; do not reload |
+| `atrium.usageToken.error` | COHO → app | Remint failed; tell the manager to close and reopen |
 
 Apps may ignore theme messages. Matching COHO CSS is not required — this is optional host context for third-party chrome. Check `event.origin` against your allowed COHO parent origins before applying theme. Prefer the signed `theme` query for first paint, then listen for live updates.
 
-Resize, open-full-app, and toast remain reserved on the same bridge; do not invent parallel channels.
+COHO also remints the usage JWT proactively about every 12 minutes and when the manager’s tab becomes visible again. The Node kit helpers `subscribeAtriumQuickViewTheme` and `createUsageTokenSession` wire theme and token refresh. Resize, open-full-app, and toast remain reserved on the same bridge; do not invent parallel channels.
 
 ### External URL
 
@@ -617,7 +621,7 @@ At connect, COHO mints a **background app token** — a machine principal creden
 - Approval updates the existing key's role in place, is audited, and takes effect on the next API request. It does not rotate credentials or rerun `lifecycle.setup`. Disconnect/connect remains the credential-rotation path.
 - Scope removal is not automatic. A future explicit downgrade/revoke flow owns that case.
 
-**Interactive open (quick view / external configure):** COHO also mints a short-lived **usage JWT** (`atriumUsageToken`) bound to the signed-in manager, organisation, and connection. Public API accepts that Bearer as well as the connection API key Guid. On each usage-token request, effective scopes are recomputed as **connection scopes ∩ person scopes** (so a restricted manager cannot outrun their role through an org-installed app). Background triggers keep using the connection `apiKey` only.
+**Interactive open (quick view / external configure):** COHO also mints a short-lived **usage JWT** (`atriumUsageToken`) bound to the signed-in manager, organisation, and connection. Public API accepts that Bearer as well as the connection API key Guid. On each usage-token request, effective scopes are recomputed as **connection scopes ∩ person scopes** (so a restricted manager cannot outrun their role through an org-installed app). While a quick view stays open, COHO remints via the postMessage bridge (`atrium.usageToken`) so interactive sessions can last as long as the manager’s COHO session — apps must swap the Bearer; they cannot mint. Background triggers keep using the connection `apiKey` only.
 
 **Install scope:** Connect can be organisation-wide (default) or **personal** (installer only). Organisation installs may also set a person allow-list; when the allow-list is empty, any member with Store access can open the app. Personal installs keep the org background `apiKey` for schedules/webhooks, but only the installing manager appears in My apps and can open the interactive UI. That is the dual-credential model: background org key + interactive person usage JWT.
 

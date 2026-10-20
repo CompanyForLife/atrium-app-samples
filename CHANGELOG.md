@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-20 — usage-token remint while quick view stays open
+
+- Developer spec §6 / §8: keep interactive sessions alive past the ~15m JWT — COHO remints via postMessage (`atrium.usageToken.refresh` / `atrium.usageToken` / error); apps must swap the Bearer (cannot mint)
+- Host also remints about every 12 minutes and on tab visibility
+- Node kit helpers `createUsageTokenSession` / `setBearer` (in HouseShare `kits/atrium-node`; not copied into this pack)
+- Republish developer spec from HouseShare SoT
+
 ## 2026-10-20 — quick-view theme bridge
 
 - Developer spec §6: signed launch query `theme=light|dark` (opener `User.DarkMode`) plus host→app `atrium.quickView.theme` postMessage (load / ready / mid-session toggle)
