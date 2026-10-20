@@ -152,9 +152,29 @@ export function loadSecret(connectionReference) {
   return loadConnection(connectionReference)?.signingSecret;
 }
 
+export const DEFAULT_FRAME_ANCESTORS =
+  'https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200';
+
+const REQUIRED_STORE_FRAME_ANCESTORS =
+  'https://applabs.coho.management https://*.coho.management http://localhost:4200';
+
+function uniqueAncestorTokens(...lists) {
+  const seen = new Set();
+  const out = [];
+  for (const list of lists) {
+    for (const token of String(list || '').split(/\s+/)) {
+      if (!token || seen.has(token)) continue;
+      seen.add(token);
+      out.push(token);
+    }
+  }
+  return out.join(' ');
+}
+
 export function sanitizeFrameAncestors(value) {
   const trimmed = String(value ?? '').trim();
-  if (!trimmed) return "'none'";
+  const noneOnly = trimmed && trimmed.split(/\s+/).every((tok) => tok === "'none'");
+  let safe = true;
   for (const character of trimmed) {
     const code = character.codePointAt(0) ?? 0;
     const isAlphaNumeric =
@@ -163,10 +183,19 @@ export function sanitizeFrameAncestors(value) {
       (code >= 97 && code <= 122);
     const isPunctuation = " '*.:/-_".includes(character);
     if (!isAlphaNumeric && !isPunctuation) {
-      return "'none'";
+      safe = false;
+      break;
     }
   }
-  return trimmed;
+  if (!trimmed || noneOnly || !safe) {
+    return uniqueAncestorTokens(DEFAULT_FRAME_ANCESTORS, parentOrigin());
+  }
+  return uniqueAncestorTokens(
+    trimmed,
+    REQUIRED_STORE_FRAME_ANCESTORS,
+    DEFAULT_FRAME_ANCESTORS,
+    parentOrigin(),
+  );
 }
 
 export function parentOrigin() {

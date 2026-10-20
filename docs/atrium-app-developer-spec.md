@@ -486,7 +486,11 @@ GETs.
 
 You must:
 
-- Send `Content-Security-Policy: frame-ancestors` listing COHO origins (do not use `*`).
+- Send `Content-Security-Policy: frame-ancestors` listing COHO origins (do not use a bare `*`).
+
+#### One image across Labs / Playground / Production
+
+Ship one Docker image. Bake `https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200` as the default; union `ATRIUM_FRAME_ANCESTORS`; deploy-inject exact `ATRIUM_PARENT_ORIGIN` per env.
 - Treat the page as **third-party chrome** — no requirement to match COHO CSS.
 - Never put the API key or signing secret in the query string. The launch signature is not a substitute for checking method, path, and connection.
 

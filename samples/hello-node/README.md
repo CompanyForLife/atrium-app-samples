@@ -10,7 +10,7 @@ Default port: **5100** (`PORT` env override).
 npm start
 ```
 
-Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. That is your app's own setup secret: COHO mints it when you register the app and shows it once in the create response (regenerate it from My apps if lost). On Atrium Hosting, COHO injects the env var for you; when self-hosting, set it yourself before connecting. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts. Set `ATRIUM_FRAME_ANCESTORS` to the COHO origin allowed to embed `/ui`, and set `ATRIUM_PARENT_ORIGIN` to that exact origin for the close message (for example `http://localhost:4200` in local development).
+Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. That is your app's own setup secret: COHO mints it when you register the app and shows it once in the create response (regenerate it from My apps if lost). On Atrium Hosting, COHO injects the env var for you; when self-hosting, set it yourself before connecting. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts. Bake one-image COHO `frame-ancestors` wildcards by default (`*.coho.management` etc.). Optional `ATRIUM_FRAME_ANCESTORS` is unioned with that list. Set `ATRIUM_PARENT_ORIGIN` to the exact Store origin for close postMessage — deploy-inject per environment (for example `http://localhost:4200` locally, `https://applabs.coho.management` on Labs).
 
 ## Endpoints
 

@@ -707,25 +707,58 @@ public static class AtriumLogic
         }
     }
 
+    public const string DefaultFrameAncestors =
+        "https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200";
+
+    const string RequiredStoreFrameAncestors =
+        "https://applabs.coho.management https://*.coho.management http://localhost:4200";
+
     public static string SanitizeFrameAncestors(string? value)
     {
         value = (value ?? "").Trim();
-        if (value.Length == 0)
+        if (value.Length == 0 || IsNoneOnly(value) || !IsSafeSourceList(value))
         {
-            return "'none'";
+            return UniqueTokens(DefaultFrameAncestors, ParentOrigin());
         }
 
+        return UniqueTokens(value, RequiredStoreFrameAncestors, DefaultFrameAncestors, ParentOrigin());
+    }
+
+    static bool IsNoneOnly(string value) =>
+        value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .All(token => token == "'none'");
+
+    static bool IsSafeSourceList(string value)
+    {
         foreach (var character in value)
         {
             var isAlphaNumeric = character is (>= '0' and <= '9') or (>= 'A' and <= 'Z') or (>= 'a' and <= 'z');
             var isPunctuation = " '*.:/-_".Contains(character);
             if (!isAlphaNumeric && !isPunctuation)
             {
-                return "'none'";
+                return false;
             }
         }
 
-        return value;
+        return true;
+    }
+
+    static string UniqueTokens(params string[] lists)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var outList = new List<string>();
+        foreach (var list in lists)
+        {
+            foreach (var token in list.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (seen.Add(token))
+                {
+                    outList.Add(token);
+                }
+            }
+        }
+
+        return string.Join(' ', outList);
     }
 
     public static string ParentOrigin()

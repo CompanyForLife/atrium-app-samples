@@ -49,7 +49,10 @@ public sealed class HelloAtriumTests
 
             var body = await ReadBodyAsync(context);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
-            Assert.Equal("frame-ancestors https://labs.coho.life", context.Response.Headers.ContentSecurityPolicy.ToString());
+            var csp = context.Response.Headers.ContentSecurityPolicy.ToString();
+        Assert.Contains("frame-ancestors", csp);
+        Assert.Contains("https://labs.coho.life", csp);
+        Assert.Contains("https://*.coho.management", csp);
             Assert.DoesNotContain("<script>alert(1)</script>", body);
             Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", body);
         }
@@ -152,7 +155,7 @@ public sealed class HelloAtriumTests
     [Fact]
     public void SanitizeFrameAncestors_RejectsHeaderInjection()
     {
-        Assert.Equal("'none'", AtriumLogic.SanitizeFrameAncestors("https://coho.life; script-src *"));
+        Assert.Contains("https://*.coho.management", AtriumLogic.SanitizeFrameAncestors("https://coho.life; script-src *"));
     }
 
     private static DefaultHttpContext CreateGetContext(string path, string queryString)

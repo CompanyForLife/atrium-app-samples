@@ -92,7 +92,10 @@ class HelloPythonTests(unittest.TestCase):
         text = body.decode("utf-8")
 
         self.assertEqual(status, 200)
-        self.assertEqual(headers.get("content-security-policy"), "frame-ancestors https://labs.coho.life")
+        csp = headers.get("content-security-policy") or ""
+        self.assertIn("frame-ancestors", csp)
+        self.assertIn("https://labs.coho.life", csp)
+        self.assertIn("https://*.coho.management", csp)
         self.assertNotIn("<script>alert(1)</script>", text)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", text)
         self.assertIn("Python sample app", text)

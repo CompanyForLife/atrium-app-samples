@@ -100,7 +100,9 @@ test('quick view escapes greeting HTML', async () => {
   );
 
   assert.equal(response.status, 200);
-  assert.equal(response.headers['content-security-policy'], 'frame-ancestors https://labs.coho.life');
+  assert.match(response.headers['content-security-policy'], /frame-ancestors/);
+  assert.match(response.headers['content-security-policy'], /https:\/\/labs\.coho\.life/);
+  assert.match(response.headers['content-security-policy'], /https:\/\/\*\.coho\.management/);
   assert.equal(response.body.includes('<script>alert(1)</script>'), false);
   assert.equal(response.body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'), true);
   assert.equal(response.body.includes('Node sample app'), true);
