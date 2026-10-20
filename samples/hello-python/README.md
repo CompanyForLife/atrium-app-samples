@@ -21,7 +21,7 @@ Same runtime contract as the other hello samples:
 - `/health`
 - signed `/webhooks/atrium/*`
 - signed native config at `/config/schema` and `/config`
-- signed iframe quick view at `/ui`
+- signed iframe quick view at `/ui` (launch URL includes `atriumUsageToken` — prefer that Bearer for interactive Public API calls; connection `apiKey` for background — [spec §6 / §8](../../docs/atrium-app-developer-spec.md))
 - external app-owned page at `/configure`
 
 For local Store registration, use [`manifest.example.json`](./manifest.example.json).

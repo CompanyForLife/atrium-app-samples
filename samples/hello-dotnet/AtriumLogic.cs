@@ -794,6 +794,7 @@ public static class AtriumLogic
                 <p class="language">.NET sample app</p>
                 <h1>{{WebUtility.HtmlEncode(greeting)}}</h1>
                 <p>This iframe is rendered by the hosted .NET process, not by COHO or Node.</p>
+                <p id="theme-label">Theme: …</p>
                 <section class="probes">
                   <h2>Public API capability probes</h2>
                   <p>Harmless GETs used to demonstrate capability approval. Granted scopes should return 2xx; newly requested scopes return 403 until approved.</p>
@@ -802,8 +803,26 @@ public static class AtriumLogic
                 <button type="button" id="close">Close quick view</button>
               </main>
               <script>
+                var parentOrigin = {{parentOriginJson}};
+                function applyTheme(theme) {
+                  var next = theme === 'dark' ? 'dark' : 'light';
+                  document.documentElement.setAttribute('data-theme', next);
+                  document.body.style.background = next === 'dark' ? '#0d1b2a' : '#eef8f1';
+                  document.body.style.color = next === 'dark' ? '#e0fbfc' : '#17351f';
+                  var label = document.getElementById('theme-label');
+                  if (label) label.textContent = 'Theme: ' + next;
+                }
+                var fromQuery = new URLSearchParams(location.search).get('theme');
+                if (fromQuery === 'dark' || fromQuery === 'light') applyTheme(fromQuery);
+                window.addEventListener('message', function (event) {
+                  if (event.origin !== parentOrigin) return;
+                  if (event.data && event.data.type === 'atrium.quickView.theme') {
+                    applyTheme(event.data.theme);
+                  }
+                });
+                parent.postMessage({ type: 'atrium.quickView.ready' }, parentOrigin);
                 document.getElementById('close').addEventListener('click', function () {
-                  parent.postMessage({ type: 'atrium.quickView.close' }, {{parentOriginJson}});
+                  parent.postMessage({ type: 'atrium.quickView.close' }, parentOrigin);
                 });
               </script>
             </body>

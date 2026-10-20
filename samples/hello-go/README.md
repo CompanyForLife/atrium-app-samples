@@ -22,6 +22,8 @@ Same runtime contract as the other hello samples:
 - signed iframe quick view at `/ui`
 - external app-owned page at `/configure`
 
+COHO opens `/ui` and `/configure` with a short-lived signed launch URL that includes `connectionReference`, `atriumUsageToken` (person + organisation + connection JWT), and `atriumSignature`. Prefer `Authorization: Bearer <atriumUsageToken>` for interactive Public API calls from the quick view; keep the connection `apiKey` from `lifecycle.setup` for background/webhooks. See [developer spec §6 / §8](../../docs/atrium-app-developer-spec.md).
+
 For local Store registration, use [`manifest.example.json`](./manifest.example.json).
 
 Signature verification is pinned to the published test vectors in the [app developer spec](../../docs/atrium-app-developer-spec.md#311-signature-test-vectors).

@@ -105,7 +105,10 @@ test('quick view escapes greeting HTML', async () => {
   assert.equal(response.body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'), true);
   assert.equal(response.body.includes('Node sample app'), true);
   assert.equal(response.body.includes("'*'"), false);
-  assert.match(response.body, /postMessage\(\{ type: 'atrium\.quickView\.close' \}, "http:\/\/localhost:4200"\)/);
+  assert.match(response.body, /var parentOrigin = "http:\/\/localhost:4200"/);
+  assert.match(response.body, /atrium\.quickView\.theme/);
+  assert.match(response.body, /atrium\.quickView\.ready/);
+  assert.match(response.body, /atrium\.quickView\.close/);
 });
 
 test('external configure requires signed launch', async () => {

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Minimal Atrium self-host app (Node stdlib only). */
 
+import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +28,13 @@ import {
   verifyAtriumSignature,
 } from './lib.js';
 
+// Files from the design folder (COHO stylesheet and icon sprite). Unsigned GETs: the pages link them.
+const designDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'design');
+const DESIGN_FILES = new Map([
+  ['/design/coho.css', { file: path.join(designDir, 'coho.css'), type: 'text/css; charset=utf-8' }],
+  ['/design/icons.svg', { file: path.join(designDir, 'icons.svg'), type: 'image/svg+xml' }],
+]);
+
 /**
  * @param {import('node:http').ServerResponse} res
  * @param {number} status
@@ -52,6 +60,21 @@ function sendHtml(res, body, extraHeaders = {}) {
     'X-Content-Type-Options': 'nosniff',
     'Content-Length': Buffer.byteLength(body),
     ...extraHeaders,
+  });
+  res.end(body);
+}
+
+/**
+ * @param {import('node:http').ServerResponse} res
+ * @param {{ file: string, type: string }} entry
+ */
+function sendDesignFile(res, entry) {
+  const body = fs.readFileSync(entry.file);
+  res.writeHead(200, {
+    'Content-Type': entry.type,
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'public, max-age=3600',
+    'Content-Length': body.length,
   });
   res.end(body);
 }
@@ -273,6 +296,11 @@ export function createRequestListener(options) {
     const path = url.pathname.replace(/\/$/, '') || '/';
 
     try {
+      if (req.method === 'GET' && DESIGN_FILES.has(path)) {
+        sendDesignFile(res, DESIGN_FILES.get(path));
+        return;
+      }
+
       if (req.method === 'GET' && path === '/health') {
         sendJson(res, 200, {
           ok: true,

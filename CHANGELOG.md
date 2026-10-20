@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-20 — quick-view theme bridge
+
+- Developer spec §6: signed launch query `theme=light|dark` (opener `User.DarkMode`) plus host→app `atrium.quickView.theme` postMessage (load / ready / mid-session toggle)
+- Hello samples apply theme from the query and live bridge messages
+- Republish developer spec and hello samples from HouseShare SoT
+
 ## 2026-10-02 — Atrium Hosting Dockerfile UID contract
 
 - Developer spec §5.6: hosted images must run as UID/GID `65532` (EFS `/data` access point). Documents aspnet default UID `1654` failure mode.

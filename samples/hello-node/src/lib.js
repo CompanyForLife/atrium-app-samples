@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
-import { URL } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
 
 export const ATRIUM_SIGNATURE_HEADER = 'x-atrium-signature';
 export const DEFAULT_TOLERANCE_SECONDS = 300;
@@ -199,87 +199,52 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+const templateDir = path.dirname(fileURLToPath(import.meta.url));
+const quickViewTemplate = fs.readFileSync(path.join(templateDir, 'ui.html'), 'utf8');
+const externalConfigTemplate = fs.readFileSync(path.join(templateDir, 'configure.html'), 'utf8');
+
 /**
+ * Fills a {{placeholder}} template. Values are inserted as given, so escape them first unless they are markup.
+ * @param {string} template
+ * @param {Record<string, string>} values
+ */
+function fillTemplate(template, values) {
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => (key in values ? values[key] : match));
+}
+
+/**
+ * Quick view page, built to the COHO design guide (design/design.md) from src/ui.html.
+ * Icons come from the hidden sprite in the template, copied from design/icons.svg.
  * @param {string} greeting
  * @param {string} allowedParentOrigin
  * @param {ProbeResult[]} probes
  */
 export function quickViewHtml(greeting, allowedParentOrigin, probes) {
-  const parentOriginJson = JSON.stringify(allowedParentOrigin);
   const probeRows = probes
     .map((probe) => {
       const statusLabel = probe.status > 0 ? String(probe.status) : 'n/a';
       const detail = probe.error ? probe.error : statusLabel;
-      const outcome = probe.ok ? 'ok' : 'fail';
+      const icon = probe.ok
+        ? '<span class="icon icon--small icon--inline icon--green-xdark"><svg class="icon-tick" aria-hidden="true"><use href="#icon-tick"></use></svg></span>'
+        : '<span class="icon icon--small icon--inline icon--warning"><svg class="icon-cross" aria-hidden="true"><use href="#icon-cross"></use></svg></span>';
       return (
-        `<li><strong>${escapeHtml(probe.capability)}</strong> <code>${escapeHtml(probe.path)}</code>` +
-        ` — <span class="probe-${outcome}">${escapeHtml(detail)}</span></li>`
+        `<tr><td class="width-120">${escapeHtml(probe.capability)}</td>` +
+        `<td class="width-f-200 one-line"><code>${escapeHtml(probe.path)}</code></td>` +
+        `<td class="width-f-100 u-text-align--right">${icon} ${escapeHtml(detail)}</td></tr>`
       );
     })
     .join('');
 
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hello from Node</title>
-  <style>
-    body { background: #eef2ff; color: #1e1b4b; font-family: system-ui, sans-serif; margin: 0; padding: 2rem; }
-    main { margin: auto; max-width: 42rem; }
-    .language { color: #4338ca; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    button { background: #1e1b4b; border: 0; border-radius: .35rem; color: white; cursor: pointer; padding: .7rem 1rem; }
-    .probes { background: #fff; border: 1px solid #c7d2fe; border-radius: .5rem; margin: 1.5rem 0; padding: 1rem 1.25rem; }
-    .probes ul { margin: .5rem 0 0; padding-left: 1.2rem; }
-    .probes li { margin: .4rem 0; }
-    code { font-size: .85em; }
-    .probe-ok { color: #4338ca; font-weight: 600; }
-    .probe-fail { color: #9b2226; font-weight: 600; }
-  </style>
-</head>
-<body>
-  <main>
-    <p class="language">Node sample app</p>
-    <h1>${escapeHtml(greeting)}</h1>
-    <p>This iframe is rendered by the hosted Node process, not by COHO or Go.</p>
-    <section class="probes">
-      <h2>Public API capability probes</h2>
-      <p>Harmless GETs used to demonstrate capability approval. Granted scopes should return 2xx; newly requested scopes return 403 until approved.</p>
-      <ul>${probeRows}</ul>
-    </section>
-    <button type="button" id="close">Close quick view</button>
-  </main>
-  <script>
-    document.getElementById('close').addEventListener('click', function () {
-      parent.postMessage({ type: 'atrium.quickView.close' }, ${parentOriginJson});
-    });
-  </script>
-</body>
-</html>`;
+  return fillTemplate(quickViewTemplate, {
+    greeting: escapeHtml(greeting),
+    probeRows,
+    parentOriginJson: JSON.stringify(allowedParentOrigin),
+  });
 }
 
+/** External configuration page, built to the COHO design guide from src/configure.html. */
 export function externalConfigHtml() {
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hello Node configuration</title>
-  <style>
-    body { background: #0d1b2a; color: #e0fbfc; font-family: system-ui, sans-serif; margin: 0; padding: 2rem; }
-    main { margin: auto; max-width: 42rem; }
-    code { color: #98c1d9; }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Hello Node configuration</h1>
-    <p>This is the app-owned external configuration surface opened in a new tab.</p>
-    <p>The sample keeps organisation settings in COHO's native JSON Schema form. A production app could authenticate its own users here and offer richer settings.</p>
-    <p>Runtime: <code>Node http</code>.</p>
-  </main>
-</body>
-</html>`;
+  return externalConfigTemplate;
 }
 
 export async function loadState() {

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hello from Node</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/design/coho.css">
+</head>
+<body>
+  <!-- Icons this page uses, copied from design/icons.svg (COHO design guide, section 15.2). -->
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <symbol id="icon-tick" viewBox="0 0 30 30"><path d="m9.41662426 13.5369317c-.77971492-.7823799-2.04604304-.7845404-2.828423-.0048255-.78237997.779715-.78454041 2.0460431-.00482549 2.828423l5.03406323 5.0512696c.7815969.7842683 2.0516517.7842683 2.8332485 0l9.9659368-10c.7797149-.78238.7775544-2.0487081-.0048255-2.82842303-.78238-.77971492-2.0487081-.77755448-2.828423.00482549l-8.5493125 8.57853374z"/></symbol>
+    <symbol id="icon-cross" viewBox="0 0 30 30"><path d="m10.4142136 7.58578644 4.5857864 4.58521356 4.5857864-4.58521356c.7399408-.73994077 1.915425-.77888502 2.7012124-.11683275l.1272148.11683275c.7810485.78104858.7810485 2.04737854 0 2.82842716l-4.5852136 4.5857864 4.5852136 4.5857864c.7810485.7810486.7810485 2.0473786 0 2.8284272-.7810486.7810485-2.0473786.7810485-2.8284272 0l-4.5857864-4.5852136-4.5857864 4.5852136c-.7399408.7399407-1.91542496.778885-2.70121239.1168327l-.12721477-.1168327c-.78104859-.7810486-.78104859-2.0473786 0-2.8284272l4.58521356-4.5857864-4.58521356-4.5857864c-.78104859-.78104862-.78104859-2.04737858 0-2.82842716.78104858-.78104859 2.04737854-.78104859 2.82842716 0z"/></symbol>
+  </svg>
+
+  <main class="u-padding-left--20 u-padding-right--20">
+    <h1 class="heading--1 u-margin-top--20 u-margin-bottom--10">{{greeting}}</h1>
+    <p class="lede u-margin-bottom--20">Node sample app, rendered by the hosted Node process inside COHO's quick view.</p>
+    <p id="theme-label" class="u-text--small u-margin-bottom--20">Theme: …</p>
+
+    <section class="page__section page__section--narrow">
+      <div class="heading--section">
+        <h2 class="heading--2">Public API capability probes</h2>
+      </div>
+      <p>Harmless GETs that show capability approval. Granted scopes return 2xx. Newly requested scopes return 403 until approved.</p>
+      <table class="compact__table compact__table--narrow">
+        <thead>
+          <tr>
+            <th class="width-120">Capability</th>
+            <th class="width-f-200">Request</th>
+            <th class="width-f-100 u-text-align--right">Result</th>
+          </tr>
+        </thead>
+        <tbody>{{probeRows}}</tbody>
+      </table>
+    </section>
+
+    <div class="button__group">
+      <div class="button__group-item">
+        <button type="button" id="close" class="button button--cancel">Close quick view</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    var parentOrigin = {{parentOriginJson}};
+    function applyTheme(theme) {
+      var next = theme === 'dark' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      document.body.classList.toggle('coho__dark', next === 'dark');
+      var label = document.getElementById('theme-label');
+      if (label) label.textContent = 'Theme: ' + next;
+    }
+    var fromQuery = new URLSearchParams(location.search).get('theme');
+    if (fromQuery === 'dark' || fromQuery === 'light') applyTheme(fromQuery);
+    window.addEventListener('message', function (event) {
+      if (event.origin !== parentOrigin) return;
+      if (event.data && event.data.type === 'atrium.quickView.theme') {
+        applyTheme(event.data.theme);
+      }
+    });
+    parent.postMessage({ type: 'atrium.quickView.ready' }, parentOrigin);
+    document.getElementById('close').addEventListener('click', function () {
+      parent.postMessage({ type: 'atrium.quickView.close' }, parentOrigin);
+    });
+  </script>
+</body>
+</html>
