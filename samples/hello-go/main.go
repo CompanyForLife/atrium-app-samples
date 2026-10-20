@@ -661,15 +661,18 @@ func probePublicAPI(apiBaseUrl, apiKey, capability, path string) probeResult {
 	return result
 }
 
-const defaultFrameAncestors = "https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200"
-const requiredStoreFrameAncestors = "https://applabs.coho.management https://*.coho.management http://localhost:4200"
+const defaultFrameAncestors = "http://localhost:4200"
 
 func sanitizeFrameAncestors(value string) string {
 	value = strings.TrimSpace(value)
-	if value == "" || isNoneOnly(value) || !isSafeSourceList(value) {
-		return uniqueTokens(defaultFrameAncestors, parentOrigin())
+	parent := ""
+	if os.Getenv("ATRIUM_PARENT_ORIGIN") != "" {
+		parent = parentOrigin()
 	}
-	return uniqueTokens(value, requiredStoreFrameAncestors, defaultFrameAncestors, parentOrigin())
+	if value == "" || isNoneOnly(value) || !isSafeSourceList(value) {
+		return uniqueTokens(defaultFrameAncestors, parent)
+	}
+	return uniqueTokens(value, parent)
 }
 
 func isNoneOnly(value string) bool {

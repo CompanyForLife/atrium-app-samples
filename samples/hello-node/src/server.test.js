@@ -88,7 +88,7 @@ test('quick view escapes greeting HTML', async () => {
     apiBaseUrl: '',
   });
   configs.set(connectionReference, { greeting: '<script>alert(1)</script>' });
-  process.env.ATRIUM_FRAME_ANCESTORS = 'https://labs.coho.life';
+  process.env.ATRIUM_FRAME_ANCESTORS = 'https://applabs.coho.management';
 
   const pathAndQuery = `${QUICK_VIEW_PATH}?connectionReference=${connectionReference}`;
   const signature = createTestSignature(secret, 'GET', pathAndQuery, connectionReference);
@@ -101,8 +101,7 @@ test('quick view escapes greeting HTML', async () => {
 
   assert.equal(response.status, 200);
   assert.match(response.headers['content-security-policy'], /frame-ancestors/);
-  assert.match(response.headers['content-security-policy'], /https:\/\/labs\.coho\.life/);
-  assert.match(response.headers['content-security-policy'], /https:\/\/\*\.coho\.management/);
+    assert.match(response.headers['content-security-policy'], /https:\/\/applabs\.coho\.management/);
   assert.equal(response.body.includes('<script>alert(1)</script>'), false);
   assert.equal(response.body.includes('&lt;script&gt;alert(1)&lt;/script&gt;'), true);
   assert.equal(response.body.includes('Node sample app'), true);

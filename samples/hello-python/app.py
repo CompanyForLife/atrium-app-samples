@@ -231,14 +231,8 @@ def store_config_state(connection_reference: str, config: dict[str, Any]) -> Non
         _persist_state_locked()
 
 
-DEFAULT_FRAME_ANCESTORS = (
-    "https://applabs.coho.management https://*.coho.management "
-    "https://*.labs.coho.software https://*.coho.software https://*.coho.live "
-    "https://*.coho.life http://localhost:4200"
-)
-REQUIRED_STORE_FRAME_ANCESTORS = (
-    "https://applabs.coho.management https://*.coho.management http://localhost:4200"
-)
+DEFAULT_FRAME_ANCESTORS = "http://localhost:4200"
+
 
 
 def _unique_tokens(*lists: str) -> str:
@@ -260,12 +254,7 @@ def sanitize_frame_ancestors(value: str | None) -> str:
     safe = all(character.isalnum() or character in allowed for character in trimmed) if trimmed else False
     if not trimmed or none_only or not safe:
         return _unique_tokens(DEFAULT_FRAME_ANCESTORS, parent_origin())
-    return _unique_tokens(
-        trimmed,
-        REQUIRED_STORE_FRAME_ANCESTORS,
-        DEFAULT_FRAME_ANCESTORS,
-        parent_origin(),
-    )
+    return _unique_tokens(trimmed, parent_origin())
 
 
 def parent_origin() -> str:

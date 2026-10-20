@@ -20,4 +20,4 @@ Pick one language, run it, register a **private** app in the Store with the samp
 
 ## Quick-view CSP (Hosting)
 
-On Atrium Hosting, COHO injects `ATRIUM_FRAME_ANCESTORS` (full CSP allowlist) and `ATRIUM_PARENT_ORIGIN` (exact Store origin for that environment). Treat those as the source of truth — do not hardcode Store domains in the image. Domain moves are a Hosting redeploy, not an app rebuild. When unset (local), fall back to the one-image default wildcards.
+On Atrium Hosting, COHO injects `ATRIUM_FRAME_ANCESTORS` (full CSP allowlist) and `ATRIUM_PARENT_ORIGIN` (exact Store origin for that environment). Treat those as the source of truth — do not hardcode Store domains in the image. Domain moves are a Hosting redeploy, not an app rebuild. When unset (local), fall back to `http://localhost:4200` only.

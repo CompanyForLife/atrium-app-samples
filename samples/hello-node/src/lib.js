@@ -153,10 +153,7 @@ export function loadSecret(connectionReference) {
 }
 
 export const DEFAULT_FRAME_ANCESTORS =
-  'https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200';
-
-const REQUIRED_STORE_FRAME_ANCESTORS =
-  'https://applabs.coho.management https://*.coho.management http://localhost:4200';
+  'http://localhost:4200';
 
 function uniqueAncestorTokens(...lists) {
   const seen = new Set();
@@ -187,15 +184,11 @@ export function sanitizeFrameAncestors(value) {
       break;
     }
   }
+  const parent = process.env.ATRIUM_PARENT_ORIGIN ? parentOrigin() : '';
   if (!trimmed || noneOnly || !safe) {
-    return uniqueAncestorTokens(DEFAULT_FRAME_ANCESTORS, parentOrigin());
+    return uniqueAncestorTokens(DEFAULT_FRAME_ANCESTORS, parent);
   }
-  return uniqueAncestorTokens(
-    trimmed,
-    REQUIRED_STORE_FRAME_ANCESTORS,
-    DEFAULT_FRAME_ANCESTORS,
-    parentOrigin(),
-  );
+  return uniqueAncestorTokens(trimmed, parent);
 }
 
 export function parentOrigin() {

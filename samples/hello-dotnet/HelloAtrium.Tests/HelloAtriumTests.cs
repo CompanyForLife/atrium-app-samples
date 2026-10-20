@@ -35,7 +35,7 @@ public sealed class HelloAtriumTests
         const string secret = "sample-secret";
         AtriumLogic.Connections[connectionReference] = new ConnectionState(secret);
         AtriumLogic.Configs[connectionReference] = JsonNode.Parse("""{"greeting":"<script>alert(1)</script>"}""")!.AsObject();
-        Environment.SetEnvironmentVariable("ATRIUM_FRAME_ANCESTORS", "https://labs.coho.life");
+        Environment.SetEnvironmentVariable("ATRIUM_FRAME_ANCESTORS", "https://applabs.coho.management");
 
         try
         {
@@ -50,9 +50,8 @@ public sealed class HelloAtriumTests
             var body = await ReadBodyAsync(context);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
             var csp = context.Response.Headers.ContentSecurityPolicy.ToString();
-        Assert.Contains("frame-ancestors", csp);
-        Assert.Contains("https://labs.coho.life", csp);
-        Assert.Contains("https://*.coho.management", csp);
+            Assert.Contains("frame-ancestors", csp);
+            Assert.Contains("https://applabs.coho.management", csp);
             Assert.DoesNotContain("<script>alert(1)</script>", body);
             Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", body);
         }
@@ -155,7 +154,7 @@ public sealed class HelloAtriumTests
     [Fact]
     public void SanitizeFrameAncestors_RejectsHeaderInjection()
     {
-        Assert.Contains("https://*.coho.management", AtriumLogic.SanitizeFrameAncestors("https://coho.life; script-src *"));
+        Assert.Equal("http://localhost:4200", AtriumLogic.SanitizeFrameAncestors("https://coho.life; script-src *"));
     }
 
     private static DefaultHttpContext CreateGetContext(string path, string queryString)

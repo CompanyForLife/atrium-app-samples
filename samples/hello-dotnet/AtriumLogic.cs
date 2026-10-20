@@ -707,21 +707,20 @@ public static class AtriumLogic
         }
     }
 
-    public const string DefaultFrameAncestors =
-        "https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200";
-
-    const string RequiredStoreFrameAncestors =
-        "https://applabs.coho.management https://*.coho.management http://localhost:4200";
+    public const string DefaultFrameAncestors = "http://localhost:4200";
 
     public static string SanitizeFrameAncestors(string? value)
     {
         value = (value ?? "").Trim();
+        var parent = string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ATRIUM_PARENT_ORIGIN"))
+            ? ""
+            : ParentOrigin();
         if (value.Length == 0 || IsNoneOnly(value) || !IsSafeSourceList(value))
         {
-            return UniqueTokens(DefaultFrameAncestors, ParentOrigin());
+            return UniqueTokens(DefaultFrameAncestors, parent);
         }
 
-        return UniqueTokens(value, RequiredStoreFrameAncestors, DefaultFrameAncestors, ParentOrigin());
+        return UniqueTokens(value, parent);
     }
 
     static bool IsNoneOnly(string value) =>

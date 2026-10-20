@@ -7,7 +7,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /hello-go . 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /hello-go /hello-go
 COPY --from=build --chown=65532:65532 /data /data
-ENV ATRIUM_FRAME_ANCESTORS="https://applabs.coho.management https://*.coho.management https://*.labs.coho.software https://*.coho.software https://*.coho.live https://*.coho.life http://localhost:4200"
 ENV PORT=5102
 ENV ATRIUM_DATA_DIR=/data
 USER nonroot:nonroot

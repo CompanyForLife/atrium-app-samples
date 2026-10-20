@@ -81,7 +81,7 @@ class HelloPythonTests(unittest.TestCase):
         secret = "sample-secret"
         hello.connections[connection_reference] = hello.ConnectionState(signing_secret=secret)
         hello.configs[connection_reference] = {"greeting": "<script>alert(1)</script>"}
-        os.environ["ATRIUM_FRAME_ANCESTORS"] = "https://labs.coho.life"
+        os.environ["ATRIUM_FRAME_ANCESTORS"] = "https://applabs.coho.management"
         self._start_server()
 
         path_and_query = f"/ui?connectionReference={connection_reference}"
@@ -94,8 +94,7 @@ class HelloPythonTests(unittest.TestCase):
         self.assertEqual(status, 200)
         csp = headers.get("content-security-policy") or ""
         self.assertIn("frame-ancestors", csp)
-        self.assertIn("https://labs.coho.life", csp)
-        self.assertIn("https://*.coho.management", csp)
+        self.assertIn("https://applabs.coho.management", csp)
         self.assertNotIn("<script>alert(1)</script>", text)
         self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", text)
         self.assertIn("Python sample app", text)

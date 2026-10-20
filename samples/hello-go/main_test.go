@@ -23,7 +23,7 @@ func TestQuickViewRequiresSignatureAndEscapesGreeting(t *testing.T) {
 	secret := "sample-secret"
 	connections.Store(connectionReference, connectionState{SigningSecret: secret})
 	configs.Store(connectionReference, map[string]any{"greeting": "<script>alert(1)</script>"})
-	t.Setenv("ATRIUM_FRAME_ANCESTORS", "https://labs.coho.life")
+	t.Setenv("ATRIUM_FRAME_ANCESTORS", "https://applabs.coho.management")
 
 	pathAndQuery := quickViewPath + "?connectionReference=" + connectionReference
 	signature := createTestSignature(secret, http.MethodGet, pathAndQuery, connectionReference)
@@ -40,7 +40,7 @@ func TestQuickViewRequiresSignatureAndEscapesGreeting(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", response.Code, response.Body.String())
 	}
 	csp := response.Header().Get("Content-Security-Policy")
-	if !strings.Contains(csp, "frame-ancestors") || !strings.Contains(csp, "https://labs.coho.life") || !strings.Contains(csp, "https://*.coho.management") {
+	if !strings.Contains(csp, "frame-ancestors") || !strings.Contains(csp, "https://applabs.coho.management") {
 		t.Fatalf("unexpected CSP: %q", csp)
 	}
 	if strings.Contains(response.Body.String(), "<script>alert(1)</script>") {
@@ -239,7 +239,7 @@ func TestProbePublicAPIReportsSuccessAfterApproval(t *testing.T) {
 }
 
 func TestSanitizeFrameAncestorsRejectsHeaderInjection(t *testing.T) {
-	if got := sanitizeFrameAncestors("https://coho.life; script-src *"); !strings.Contains(got, "https://*.coho.management") {
+	if got := sanitizeFrameAncestors("https://coho.life; script-src *"); got != "http://localhost:4200" {
 		t.Fatalf("expected default CSP on unsafe input, got %q", got)
 	}
 }

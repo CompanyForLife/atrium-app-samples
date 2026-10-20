@@ -13,8 +13,8 @@ go run .
 
 `ATRIUM_SETUP_SECRET` is required. Set `ATRIUM_DATA_DIR` to persist connection
 secrets and config across restarts. The hosted container mounts its per-app EFS
-access point there. Bake one-image COHO `frame-ancestors` wildcards by default (`*.coho.management` etc.).
-Optional `ATRIUM_FRAME_ANCESTORS` is unioned. Set `ATRIUM_PARENT_ORIGIN` to the exact
+access point there. On Atrium Hosting, COHO injects `ATRIUM_FRAME_ANCESTORS` and `ATRIUM_PARENT_ORIGIN` (one Store origin per environment).
+Treat those as the source of truth. Local fallback when unset is `http://localhost:4200`. Set `ATRIUM_PARENT_ORIGIN` to the exact
 Store origin for close postMessage (deploy-inject per env) (for example `http://localhost:4200` in local development).
 
 ## Endpoints
