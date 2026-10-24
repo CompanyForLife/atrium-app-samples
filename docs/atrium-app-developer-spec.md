@@ -42,14 +42,14 @@ registered **base URL**. Browser-facing paths are relative to
   "manifestVersion": 1,
   "health": { "path": "/health", "method": "GET" },
   "config": {
-    "mode": "native",
+    "mode": "embedded",
     "browserBaseUrl": null,
-    "externalConfigureUrl": null,
-    "schemaPath": "/config/schema",
-    "getPath": "/config",
-    "putPath": "/config",
-    "quickViewPath": null,
-    "openPresentation": null
+    "externalConfigureUrl": "/configure",
+    "schemaPath": null,
+    "getPath": null,
+    "putPath": null,
+    "quickViewPath": "/ui",
+    "openPresentation": "modal"
   },
   "requestedCapabilities": ["conversations.read", "conversations.write"],
   "triggers": {
@@ -65,6 +65,8 @@ registered **base URL**. Browser-facing paths are relative to
 }
 ```
 
+This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json`. Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent (§6).
+
 | Field | Meaning |
 |---|---|
 | `health.path` | Unsigned `GET`. See §4. |
@@ -73,11 +75,11 @@ registered **base URL**. Browser-facing paths are relative to
 | `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. Each entry: `key`, `cron` (5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges, steps), `timezone` (IANA, default UTC), `path`. **Private / unreviewed apps:** at most 4 schedules, and no denser than hourly (minute field must be a single value). Reviewed public listings are not capped this way. |
 | `triggers.events` | Opt-in. Unknown keys are ignored until COHO supports them. |
 | `requestedCapabilities` | Catalogue scope ids the app requires (e.g. `conversations.write`). Legacy short names still expand. Connect fails if the connecting person cannot grant every resolved scope. See §8. |
-| `config.schemaPath` / `getPath` / `putPath` | App-owned light config. Store proxies signed GET/PUT. Omit or unused if you have no prefs. |
+| `config.schemaPath` / `getPath` / `putPath` | Optional app-owned **light** prefs only (a handful of scalars). Store proxies signed GET/PUT. Omit when unused. Serious UI is quick view, not this form. |
 | `config.browserBaseUrl` | Public HTTPS origin for hosted app UI. Runtime webhooks and config remain on the private registered base URL. |
 | `config.externalConfigureUrl` | Optional new-tab configure path on the browser base URL. |
-| `config.quickViewPath` | Optional in-COHO iframe. **Omit for agent apps** (webhooks + API only). See §6. |
-| `config.openPresentation` | Optional when `quickViewPath` is set: `full` \| `modal` \| `side`. Store defaults to `modal` if omitted. |
+| `config.quickViewPath` | In-COHO iframe path. **Default for almost all apps.** Omit only for rare background agents (webhooks + API + optional light prefs). See §6. |
+| `config.openPresentation` | When `quickViewPath` is set: `full` \| `modal` \| `side`. Store defaults to `modal` if omitted. |
 
 `config.mode` is one or more of `native`, `external`, `embedded`, joined with `+` when combined (for example `native+embedded`). The legacy value `both` means native + external.
 
@@ -379,7 +381,7 @@ Typical paths (override in the manifest):
 | GET | `/config?connectionReference=` | Current values |
 | PUT | `/config?connectionReference=` | Persist values |
 
-Use this for small preference sets (subject line, send time). Serious UI belongs in quick view or an external URL.
+Use this only for small preference sets (subject line, send time, dry-run). Lists, reports, payments, approvals, multi-step setup, and anything a manager must click through belong in **quick view** (or an external URL) — not in this form.
 
 ### 5.3.1 Supported JSON Schema contract
 
@@ -538,17 +540,17 @@ Self-hosted apps ignore this section — you own the process and the disk.
 
 ## 6. How the app appears in COHO
 
-Three surfaces. Combine them if you need to. **Not every app needs a UI.**
+**Default: web app with a quick view.** If a manager must click, fill a form, approve something, pay, or view a report inside COHO, set `quickViewPath` (and usually `openPresentation`). Native Store config is only for a handful of scalar prefs. Background-only agents are a rare exception (roughly under 5% of apps).
 
-### Agent (no UI)
+Decision rule:
 
-Omit `quickViewPath`. Birthday-style: webhooks + Public API + optional native prefs. The Store will not offer **Open quick view**.
+| Manager needs to… | Surface |
+|---|---|
+| Open a screen, run a workflow, see a report, collect payments, review applicants, or do one-off actions | **Quick view** (`quickViewPath`) and/or **external URL** |
+| Flip a few prefs (send time, dry-run, subject line) and leave the app running | Optional **light config** (§5.3) *in addition to* the above when needed |
+| Never open the app — pure background automation only | **Agent** (omit `quickViewPath`) — justify this explicitly |
 
-### Light config in the Store
-
-JSON Schema form, proxied to you (§5.3).
-
-### Quick view (iframe)
+### Quick view (iframe) — default
 
 Set `config.quickViewPath`. Self-hosted apps resolve it against the registered
 base URL. Hosted apps with browser UI set `config.browserBaseUrl`, and COHO
@@ -587,7 +589,23 @@ Resize, open-full-app, and toast are reserved on the same bridge; do not invent 
 
 `externalConfigureUrl` opens in a **new tab** through the same short-lived signed
 launch flow as quick view (including `atriumUsageToken`). Verify the `GET`
-signature before showing connection-specific UI.
+signature before showing connection-specific UI. Use this for an existing SaaS
+dashboard, or alongside quick view — not as a substitute for skipping UI when
+managers still need to work in the product.
+
+### Light config in the Store
+
+Optional JSON Schema form, proxied to you (§5.3). Flat scalars only. Never use
+this as the main product surface.
+
+### Agent (no UI) — rare exception
+
+Omit `quickViewPath` only when the product is truly background: webhooks + Public
+API + optional light prefs, and managers never need to open a screen. Birthday-style
+message senders fit; payments, reports, applicant review, multi-step setup, and
+one-off actions do **not**. The Store will not offer **Open quick view**. If you
+omit `quickViewPath`, write down why the product has no interactive manager surface
+before you list.
 
 ### Your Store card
 
@@ -721,4 +739,4 @@ Samples target **self-host** by default. If COHO runs your image on Atrium Hosti
 - Paid apps / Stripe
 - Injecting UI into existing COHO panels (not v1)
 
-If you implement health, setup, disconnect, one trigger, Public API calls, logs, and (if you want a UI) `quickViewPath` plus `frame-ancestors`, you can get most of an app done.
+If you implement health, setup, disconnect, one trigger, Public API calls, logs, and (for almost all apps) `quickViewPath` plus `frame-ancestors`, you can get most of an app done.
