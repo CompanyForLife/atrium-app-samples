@@ -2,7 +2,7 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 import specSections from './content/spec-content.generated.json';
 import { SpecSection } from './content/spec-section';
 
-const SAMPLE_SLUGS = ['hello-node', 'hello-python', 'hello-go', 'hello-dotnet'];
+const SAMPLE_SLUGS = ['hello-node', 'hello-python', 'hello-go', 'hello-dotnet', 'hello-agent-node'];
 
 const DOC_SLUGS = (specSections as SpecSection[]).map(section => section.slug);
 
