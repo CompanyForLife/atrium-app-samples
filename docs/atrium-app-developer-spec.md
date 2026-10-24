@@ -42,12 +42,12 @@ registered **base URL**. Browser-facing paths are relative to
   "manifestVersion": 1,
   "health": { "path": "/health", "method": "GET" },
   "config": {
-    "mode": "embedded+external",
+    "mode": "native+embedded+external",
     "browserBaseUrl": null,
     "externalConfigureUrl": "/configure",
-    "schemaPath": null,
-    "getPath": null,
-    "putPath": null,
+    "schemaPath": "/config/schema",
+    "getPath": "/config",
+    "putPath": "/config",
     "quickViewPath": "/ui",
     "openPresentation": "modal"
   },

@@ -37,7 +37,8 @@ const CONFIG_SCHEMA = {
     dryRun: {
       type: 'boolean',
       title: 'Dry run',
-      description: 'When true, log what would run instead of calling the Public API.',
+      description:
+        'Demo flag only. This sample always logs events; set false in your fork when you wire a real Public API call.',
       default: true,
     },
     note: {
@@ -284,8 +285,15 @@ export function createRequestListener(options) {
           sendJson(res, 400, { ok: false, message: 'Invalid JSON' });
           return;
         }
+        const priorConfig = configs.get(connectionReference);
         configs.set(connectionReference, config);
-        await persistState();
+        try {
+          await persistState();
+        } catch (err) {
+          if (priorConfig !== undefined) configs.set(connectionReference, priorConfig);
+          else configs.delete(connectionReference);
+          throw err;
+        }
         console.log('[hello-agent-node] config saved', connectionReference);
         sendJson(res, 200, config);
         return;
@@ -317,12 +325,20 @@ export function createRequestListener(options) {
           sendJson(res, 401, { ok: false, message: 'Invalid signature' });
           return;
         }
-        connections.set(connectionReference, {
+        const priorConnection = connections.get(connectionReference);
+        const nextConnection = {
           signingSecret: setupSecret,
           apiKey: typeof data.apiKey === 'string' ? data.apiKey : '',
           apiBaseUrl: typeof data.apiBaseUrl === 'string' ? data.apiBaseUrl.trim().replace(/\/+$/, '') : '',
-        });
-        await persistState();
+        };
+        connections.set(connectionReference, nextConnection);
+        try {
+          await persistState();
+        } catch (err) {
+          if (priorConnection) connections.set(connectionReference, priorConnection);
+          else connections.delete(connectionReference);
+          throw err;
+        }
         console.log('[hello-agent-node] setup', { connectionReference });
         sendJson(res, 200, { ok: true });
         return;
