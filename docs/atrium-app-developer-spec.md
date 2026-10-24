@@ -65,7 +65,7 @@ registered **base URL**. Browser-facing paths are relative to
 }
 ```
 
-This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json` (or hello-python / hello-go / hello-dotnet). Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent — then use `samples/hello-agent-node` and read its README (§6).
+This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json` (or hello-python / hello-go / hello-dotnet). Starter manifests may still say `"mode": "both"` — that is the legacy spelling of native + external for the same web-app surface; `"native+embedded+external"` here is the explicit form. Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent — then use `samples/hello-agent-node` and read its README (§6).
 
 | Field | Meaning |
 |---|---|
