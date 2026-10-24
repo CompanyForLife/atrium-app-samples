@@ -8,6 +8,9 @@ export interface SampleContent {
     runCommand: string;
     extraNote?: string;
     testsCommand?: string;
+    /** Override the default web-app endpoint list (e.g. agent-class sample). */
+    endpoints?: string[];
+    endpointsIntro?: string;
 }
 
 const ENV_VARS_PARAGRAPH =
@@ -15,6 +18,14 @@ const ENV_VARS_PARAGRAPH =
     'connection secrets and config across restarts. On Atrium Hosting, COHO injects ' +
     'ATRIUM_FRAME_ANCESTORS and ATRIUM_PARENT_ORIGIN (one Store origin per environment). ' +
     'Locally, fall back to http://localhost:4200 when those are unset.';
+
+export const DEFAULT_WEB_APP_ENDPOINTS = [
+    '/health',
+    'signed /webhooks/atrium/*',
+    'signed native config at /config/schema and /config',
+    'signed iframe quick view at /ui',
+    'external app-owned page at /configure'
+];
 
 export const SAMPLES: SampleContent[] = [
     {
@@ -56,6 +67,26 @@ export const SAMPLES: SampleContent[] = [
         path: 'samples/hello-dotnet',
         runCommand: 'dotnet run --project HelloAtrium.csproj',
         testsCommand: 'dotnet test HelloAtrium.Tests/HelloAtrium.Tests.csproj'
+    },
+    {
+        slug: 'hello-agent-node',
+        title: 'hello-agent-node',
+        navLabel: 'Agent exception (hello-agent-node)',
+        language: 'Node 20+ (stdlib only) — agent class',
+        port: 5104,
+        path: 'samples/hello-agent-node',
+        runCommand: 'npm start',
+        testsCommand: 'npm test',
+        extraNote:
+            'EXCEPTION: no quick view and no /configure. Prefer a web-app hello unless the product is truly background-only.',
+        endpointsIntro: 'Agent-class surface (no UI):',
+        endpoints: [
+            '/health',
+            'signed /webhooks/atrium/*',
+            'signed native light config at /config/schema and /config',
+            'no /ui — Store will not offer Open quick view',
+            'no /configure'
+        ]
     }
 ];
 

@@ -13,9 +13,9 @@
   }
 
   <h3>Endpoints</h3>
-  <p>Same runtime contract as the other hello samples:</p>
+  <p>{{ endpointsIntro() }}</p>
   <ul class="sample-page__endpoints">
-    @for (endpoint of endpoints; track endpoint) {
+    @for (endpoint of endpoints(); track endpoint) {
       <li><code>{{ endpoint }}</code></li>
     }
   </ul>

@@ -3,15 +3,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { ENV_VARS_NOTE, SAMPLES, SampleContent } from '../../content/samples';
-
-const ENDPOINTS = [
-    '/health',
-    'signed /webhooks/atrium/*',
-    'signed native config at /config/schema and /config',
-    'signed iframe quick view at /ui',
-    'external app-owned page at /configure'
-];
+import {
+    DEFAULT_WEB_APP_ENDPOINTS,
+    ENV_VARS_NOTE,
+    SAMPLES,
+    SampleContent
+} from '../../content/samples';
 
 @Component({
     selector: 'app-sample-page',
@@ -23,7 +20,6 @@ export class SamplePageComponent {
     private route = inject(ActivatedRoute);
     private title = inject(Title);
 
-    protected readonly endpoints = ENDPOINTS;
     protected readonly envVarsNote = ENV_VARS_NOTE;
 
     private readonly slug = toSignal(
@@ -33,6 +29,15 @@ export class SamplePageComponent {
 
     protected readonly sample = computed<SampleContent | undefined>(() =>
         SAMPLES.find(sample => sample.slug === this.slug())
+    );
+
+    protected readonly endpoints = computed(() => {
+        const sample = this.sample();
+        return sample?.endpoints ?? DEFAULT_WEB_APP_ENDPOINTS;
+    });
+
+    protected readonly endpointsIntro = computed(
+        () => this.sample()?.endpointsIntro ?? 'Same runtime contract as the other hello samples:'
     );
 
     constructor() {
