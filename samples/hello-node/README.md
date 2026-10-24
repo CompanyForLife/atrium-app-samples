@@ -1,6 +1,8 @@
 # Atrium hello-node
 
-Minimal Atrium web app using Node.js stdlib (`node:http`, `node:crypto`).
+**Class: web app (default).** Minimal Atrium app with a quick view at `/ui`, using Node.js stdlib (`node:http`, `node:crypto`).
+
+Start here for almost every product. For the rare background-only exception (no UI), see [`hello-agent-node`](../hello-agent-node).
 
 Default port: **5100** (`PORT` env override).
 

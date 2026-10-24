@@ -1,7 +1,10 @@
 # Atrium hello-go
 
-Minimal Atrium web app using Go stdlib (`net/http`, `crypto/hmac`). It is the
-second-language Hosting proof after the Node birthday agent.
+**Class: web app (default).** Minimal Atrium app with a quick view at `/ui`, using
+Go stdlib (`net/http`, `crypto/hmac`). It is the second-language Hosting proof
+after the Node birthday agent.
+
+Start here for almost every product. For the rare background-only exception (no UI), see [`hello-agent-node`](../hello-agent-node).
 
 Default port: **5102** (`PORT` env override).
 

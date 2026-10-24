@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-24 — web app default; agent sample as exception
+
+- Developer spec §2 / §6: default sample manifest and surface guidance is web app + `quickViewPath`; agent/config-only is a rare exception
+- Add `samples/hello-agent-node` — explicit no-UI agent starter with README wording that it is the exception
+- Root README and §9 kit table list the four language hellos as web apps and point agent builders at `hello-agent-node` only
+
 ## 2026-10-20 — usage-token remint while quick view stays open
 
 - Developer spec §6 / §8: keep interactive sessions alive past the ~15m JWT — COHO remints via postMessage (`atrium.usageToken.refresh` / `atrium.usageToken` / error); apps must swap the Bearer (cannot mint)

@@ -1,6 +1,8 @@
 # Atrium hello-dotnet
 
-Minimal Atrium web app using ASP.NET Core Minimal API (.NET 10).
+**Class: web app (default).** Minimal Atrium app with a quick view at `/ui`, using ASP.NET Core Minimal API (.NET 10).
+
+Start here for almost every product. For the rare background-only exception (no UI), see [`hello-agent-node`](../hello-agent-node).
 
 Default port: **5103** (`PORT` env override).
 

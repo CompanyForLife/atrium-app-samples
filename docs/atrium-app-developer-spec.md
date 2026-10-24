@@ -65,7 +65,7 @@ registered **base URL**. Browser-facing paths are relative to
 }
 ```
 
-This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json`. Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent (§6).
+This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json` (or hello-python / hello-go / hello-dotnet). Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent — then use `samples/hello-agent-node` and read its README (§6).
 
 | Field | Meaning |
 |---|---|
@@ -607,6 +607,11 @@ one-off actions do **not**. The Store will not offer **Open quick view**. If you
 omit `quickViewPath`, write down why the product has no interactive manager surface
 before you list.
 
+Reference sample (exception only): [`samples/hello-agent-node`](../samples/hello-agent-node).
+Do **not** start from it unless you have confirmed the product has no manager UI.
+The four language hellos (`hello-node`, `hello-python`, `hello-go`, `hello-dotnet`)
+are the standard web-app starters.
+
 ### Your Store card
 
 The Store shows each app as a card. The card picture is the app's **first screenshot**, with the app name over a fade at the bottom. An app with no screenshot gets a coloured card based on its name, so it still looks tidy, but a screenshot shows people what they are getting.
@@ -692,16 +697,19 @@ Full catalogue ids appear in the Store capability picker (`conversations.read` /
 
 ## 9. Official connecting kit (starter samples)
 
-This spec, the signature test vectors (§3.1.1), and the four hello-world samples are the **official Atrium connecting kit**. There is **no npm / NuGet / PyPI SDK package** — by design. Copy a hello, keep the signature verify + lifecycle paths, delete what you do not need. Public snapshot: [CompanyForLife/atrium-app-samples](https://github.com/CompanyForLife/atrium-app-samples).
+This spec, the signature test vectors (§3.1.1), and the hello-world samples are the **official Atrium connecting kit**. There is **no npm / NuGet / PyPI SDK package** — by design. Copy a hello, keep the signature verify + lifecycle paths, delete what you do not need. Public snapshot: [CompanyForLife/atrium-app-samples](https://github.com/CompanyForLife/atrium-app-samples).
 
-| Sample | Language |
-|---|---|
-| `samples/atrium/hello-node` | Node 20+ |
-| `samples/atrium/hello-dotnet` | .NET minimal API |
-| `samples/atrium/hello-python` | Python 3, standard library only |
-| `samples/atrium/hello-go` | Go, standard library only |
+| Sample | Class | Language |
+|---|---|---|
+| `samples/hello-node` | Web app (default) | Node 20+ |
+| `samples/hello-dotnet` | Web app (default) | .NET minimal API |
+| `samples/hello-python` | Web app (default) | Python 3, standard library only |
+| `samples/hello-go` | Web app (default) | Go, standard library only |
+| `samples/hello-agent-node` | **Agent (exception)** | Node 20+ |
 
-All four implement the same surface: health, signed lifecycle webhooks, signed triggers, native config routes with a schema from §5.3.1, optional disk persistence (`ATRIUM_DATA_DIR`), quick view (`/ui`), external configure (`/configure`), and Public API capability probes in the quick view.
+The four language hellos implement the same **web app** surface: health, signed lifecycle webhooks, signed triggers, native config routes with a schema from §5.3.1, optional disk persistence (`ATRIUM_DATA_DIR`), quick view (`/ui`), external configure (`/configure`), and Public API capability probes in the quick view.
+
+`hello-agent-node` is the only starter **without** a UI. Use it only for true background agents (§6). Its README states that explicitly — copy a web-app hello unless you have a written reason not to.
 
 We deliberately do not publish a language package. The runtime contract is a few hundred lines in any language, most of which is HTTP routing you already have in your own stack, and a library that owns your server is useless if you are adding Atrium to an existing app. Verifying signatures is the one part where a subtle mistake is a security hole rather than a bug, which is why it has published test vectors instead of a package.
 

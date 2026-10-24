@@ -1,6 +1,8 @@
 # Atrium hello-python
 
-Minimal Atrium web app using Python stdlib (`http.server`, `hmac`, `hashlib`, `urllib`).
+**Class: web app (default).** Minimal Atrium app with a quick view at `/ui`, using Python stdlib (`http.server`, `hmac`, `hashlib`, `urllib`).
+
+Start here for almost every product. For the rare background-only exception (no UI), see [`hello-agent-node`](../hello-agent-node).
 
 Default port: **5101** (`PORT` env override).
 

@@ -9,14 +9,19 @@ Starter pack for building an Atrium app that COHO can connect, trigger, and disp
 
 ## Samples
 
-| Folder | Language | Default port |
-|---|---|---|
-| [samples/hello-node](samples/hello-node) | Node 20+ | 5100 |
-| [samples/hello-python](samples/hello-python) | Python 3 (stdlib) | 5101 |
-| [samples/hello-go](samples/hello-go) | Go (stdlib) | 5102 |
-| [samples/hello-dotnet](samples/hello-dotnet) | .NET minimal API | 5103 |
+**Default class: web app** (quick view at `/ui`). Start here for almost every product.
 
-Pick one language, run it, register a **private** app in the Store with the sample base URL and `manifest.example.json`, then connect.
+| Folder | Class | Language | Default port |
+|---|---|---|---|
+| [samples/hello-node](samples/hello-node) | Web app | Node 20+ | 5100 |
+| [samples/hello-python](samples/hello-python) | Web app | Python 3 (stdlib) | 5101 |
+| [samples/hello-go](samples/hello-go) | Web app | Go (stdlib) | 5102 |
+| [samples/hello-dotnet](samples/hello-dotnet) | Web app | .NET minimal API | 5103 |
+| [samples/hello-agent-node](samples/hello-agent-node) | **Agent (exception)** | Node 20+ | 5104 |
+
+`hello-agent-node` is the only sample with **no UI**. Use it only for true background automation (webhooks + Public API + optional light Store prefs). Read its README before copying it.
+
+Pick a web-app hello for your language, register a **private** app in the Store with the sample base URL and `manifest.example.json`, then connect.
 
 ## Quick-view CSP (Hosting)
 
