@@ -131,9 +131,20 @@ async function persistState() {
   persistChain = persistChain
     .catch(() => {})
     .then(async () => {
-      await fs.mkdir(path.dirname(target), { recursive: true });
-      await fs.writeFile(tmp, body, 'utf8');
+      const dir = path.dirname(target);
+      await fs.mkdir(dir, { recursive: true, mode: 0o700 });
+      try {
+        await fs.chmod(dir, 0o700);
+      } catch {
+        // Best-effort: some mounts reject chmod; write still uses 0o600 below.
+      }
+      await fs.writeFile(tmp, body, { encoding: 'utf8', mode: 0o600 });
       await fs.rename(tmp, target);
+      try {
+        await fs.chmod(target, 0o600);
+      } catch {
+        // Best-effort after rename onto an existing inode.
+      }
     });
   await persistChain;
 }
@@ -338,9 +349,17 @@ export function createRequestListener(options) {
           return;
         }
         if (pathname.endsWith('/disconnect')) {
+          const priorConnection = connections.get(connectionReference);
+          const priorConfig = configs.get(connectionReference);
           connections.delete(connectionReference);
           configs.delete(connectionReference);
-          await persistState();
+          try {
+            await persistState();
+          } catch (err) {
+            if (priorConnection) connections.set(connectionReference, priorConnection);
+            if (priorConfig !== undefined) configs.set(connectionReference, priorConfig);
+            throw err;
+          }
           console.log('[hello-agent-node] disconnect', connectionReference);
         } else {
           const config = configs.get(connectionReference) || {};
