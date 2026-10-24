@@ -89,3 +89,23 @@ test('light config schema requires signed connection', async () => {
   const schema = response.json();
   assert.equal(schema.properties.dryRun.type, 'boolean');
 });
+
+test('event webhook without connectionReference returns 400', async () => {
+  const listener = createRequestListener({ setupBootstrapSecret: 'bootstrap' });
+  const response = await request(
+    listener,
+    'POST',
+    '/webhooks/atrium/triggers/event',
+    { 'content-type': 'application/json' },
+    JSON.stringify({ type: 'event.atrium.test' }),
+  );
+  assert.equal(response.status, 400);
+  assert.match(response.body, /connectionReference/);
+});
+
+test('invalid request URL does not crash the listener', async () => {
+  const listener = createRequestListener({ setupBootstrapSecret: 'bootstrap' });
+  // Path-only URL parsing uses a fixed base; odd Host header must not throw out of the handler.
+  const response = await request(listener, 'GET', '/health', { host: 'bad host!!' });
+  assert.equal(response.status, 200);
+});

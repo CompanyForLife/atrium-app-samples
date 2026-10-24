@@ -115,14 +115,27 @@ function verifyAtriumSignature(rawBody, signatureHeader, signingSecret, request,
   return crypto.timingSafeEqual(expectedBuf, actualBuf);
 }
 
+/** @type {Promise<void>} */
+let persistChain = Promise.resolve();
+
 async function persistState() {
   if (!stateFile) return;
   const payload = {
     connections: Object.fromEntries(connections),
     configs: Object.fromEntries(configs),
   };
-  await fs.mkdir(path.dirname(stateFile), { recursive: true });
-  await fs.writeFile(stateFile, JSON.stringify(payload, null, 2), 'utf8');
+  const body = JSON.stringify(payload, null, 2);
+  const target = stateFile;
+  const tmp = `${target}.${process.pid}.${Date.now()}.tmp`;
+
+  persistChain = persistChain
+    .catch(() => {})
+    .then(async () => {
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.writeFile(tmp, body, 'utf8');
+      await fs.rename(tmp, target);
+    });
+  await persistChain;
 }
 
 async function loadState() {
@@ -212,10 +225,11 @@ export function createRequestListener(options) {
   const { setupBootstrapSecret } = options;
 
   return async function requestListener(req, res) {
-    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-    const pathname = url.pathname.replace(/\/$/, '') || '/';
-
     try {
+      // Fixed base — do not trust Host for URL parsing (invalid Host must not crash the process).
+      const url = new URL(req.url || '/', 'http://127.0.0.1');
+      const pathname = url.pathname.replace(/\/$/, '') || '/';
+
       if (req.method === 'GET' && pathname === '/health') {
         sendJson(res, 200, {
           ok: true,
@@ -316,7 +330,11 @@ export function createRequestListener(options) {
           return;
         }
         const connectionReference = envelope.connectionReference;
-        if (typeof connectionReference !== 'string' || !verifyConnectionSignature(req, res, url, connectionReference, rawBody)) {
+        if (typeof connectionReference !== 'string' || !connectionReference) {
+          sendJson(res, 400, { ok: false, message: 'connectionReference required' });
+          return;
+        }
+        if (!verifyConnectionSignature(req, res, url, connectionReference, rawBody)) {
           return;
         }
         if (pathname.endsWith('/disconnect')) {
