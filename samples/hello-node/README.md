@@ -1,8 +1,6 @@
 # Atrium hello-node
 
-**Class: web app (default).** Minimal Atrium app with a quick view at `/ui`, using Node.js stdlib (`node:http`, `node:crypto`).
-
-Start here for almost every product. For the rare background-only exception (no UI), see [`hello-agent-node`](../hello-agent-node).
+Minimal Atrium web app using Node.js stdlib (`node:http`, `node:crypto`).
 
 Default port: **5100** (`PORT` env override).
 
@@ -12,7 +10,7 @@ Default port: **5100** (`PORT` env override).
 npm start
 ```
 
-Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. That is your app's own setup secret: COHO mints it when you register the app and shows it once in the create response (regenerate it from My apps if lost). On Atrium Hosting, COHO injects the env var for you; when self-hosting, set it yourself before connecting. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts. On Atrium Hosting, COHO injects `ATRIUM_FRAME_ANCESTORS` and `ATRIUM_PARENT_ORIGIN` (one Store origin per environment). Treat those as the source of truth — do not bake a domain list into the image. Local-only fallback when unset is `http://localhost:4200`.
+Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. That is your app's own setup secret: COHO mints it when you register the app and shows it once in the create response (regenerate it from My apps if lost). On Atrium Hosting, COHO injects the env var for you; when self-hosting, set it yourself before connecting. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts. Set `ATRIUM_FRAME_ANCESTORS` to the COHO origin allowed to embed `/ui`, and set `ATRIUM_PARENT_ORIGIN` to that exact origin for the close message (for example `http://localhost:4200` in local development).
 
 ## Endpoints
 
@@ -22,6 +20,7 @@ Same runtime contract as the other hello samples:
 - signed `/webhooks/atrium/*`
 - signed native config at `/config/schema` and `/config`
 - signed iframe quick view at `/ui`
+- `POST /steps/order`, the quick view's own save for its checklist order, authorised by a short-lived page token the server mints into the page at launch
 - external app-owned page at `/configure`
 
 COHO opens `/ui` and `/configure` with a short-lived signed launch URL that includes `connectionReference`, `atriumUsageToken` (person + organisation + connection JWT), and `atriumSignature`. Prefer `Authorization: Bearer <atriumUsageToken>` for interactive Public API calls from the quick view; keep the connection `apiKey` from `lifecycle.setup` for background/webhooks. See [developer spec §6 / §8](../../docs/atrium-app-developer-spec.md).
@@ -32,7 +31,7 @@ Signature verification is pinned to the published test vectors in the [app devel
 
 ## Design
 
-`design/` holds the COHO design guide for Atrium apps (`design.md`), the log of gaps builders have hit and what was done about each (`design-gaps.md`), COHO's stylesheet (`coho.css`), a prebuilt icon sprite (`icons.svg`) and the checker (`check.cjs`). `/ui` and `/configure` are built from it: `src/ui.html` and `src/configure.html` link `/design/coho.css` and use only the parts the guide documents. Read [`AGENTS.md`](./AGENTS.md) before changing any UI, and run `npm run check:design` before finishing. The folder is generated from `docs/design/atrium` in HouseShare; do not edit it here.
+`design/` holds the COHO design guide for Atrium apps (`design.md`), the log of gaps builders have hit and what was done about each (`design-gaps.md`), COHO's stylesheet (`coho.css`), the reorder script (`reorder.js`), a prebuilt icon sprite (`icons.svg`) and the checker (`check.cjs`). `/ui` and `/configure` are built from it: `src/ui.html` and `src/configure.html` link `/design/coho.css` and use only the parts the guide documents, and `/ui` links `/design/reorder.js` for its checklist. Read [`AGENTS.md`](./AGENTS.md) before changing any UI, and run `npm run check:design` before finishing. The folder is generated from `docs/design/atrium` in HouseShare; do not edit it here.
 
 ## Tests
 

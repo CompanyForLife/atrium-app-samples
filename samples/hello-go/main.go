@@ -661,58 +661,21 @@ func probePublicAPI(apiBaseUrl, apiKey, capability, path string) probeResult {
 	return result
 }
 
-const defaultFrameAncestors = "http://localhost:4200"
-
 func sanitizeFrameAncestors(value string) string {
 	value = strings.TrimSpace(value)
-	parent := ""
-	if os.Getenv("ATRIUM_PARENT_ORIGIN") != "" {
-		parent = parentOrigin()
+	if value == "" {
+		return "'none'"
 	}
-	if value == "" || isNoneOnly(value) || !isSafeSourceList(value) {
-		return uniqueTokens(defaultFrameAncestors, parent)
-	}
-	return uniqueTokens(value, parent)
-}
-
-func isNoneOnly(value string) bool {
-	for _, token := range strings.Fields(value) {
-		if token != "'none'" {
-			return false
-		}
-	}
-	return value != ""
-}
-
-func isSafeSourceList(value string) bool {
 	for _, character := range value {
 		isAlphaNumeric := character >= '0' && character <= '9' ||
 			character >= 'A' && character <= 'Z' ||
 			character >= 'a' && character <= 'z'
 		isPunctuation := strings.ContainsRune(" '*.:/-_", character)
 		if !isAlphaNumeric && !isPunctuation {
-			return false
+			return "'none'"
 		}
 	}
-	return true
-}
-
-func uniqueTokens(lists ...string) string {
-	seen := map[string]struct{}{}
-	var out []string
-	for _, list := range lists {
-		for _, token := range strings.Fields(list) {
-			if token == "" {
-				continue
-			}
-			if _, ok := seen[token]; ok {
-				continue
-			}
-			seen[token] = struct{}{}
-			out = append(out, token)
-		}
-	}
-	return strings.Join(out, " ")
+	return value
 }
 
 func parentOrigin() string {
@@ -782,7 +745,7 @@ func quickViewHTML(greeting, allowedParentOrigin string, probes []probeResult) s
     <p id="theme-label">Theme: …</p>
     <section class="probes">
       <h2>Public API capability probes</h2>
-      <p>Harmless GETs used by the Labs access-upgrade drill. Granted scopes should return 2xx; newly requested scopes return 403 until approved.</p>
+      <p>Harmless GETs used to demonstrate capability approval. Granted scopes should return 2xx; newly requested scopes return 403 until approved.</p>
       <ul>` + probeRows.String() + `</ul>
     </section>
     <button type="button" id="close">Close quick view</button>

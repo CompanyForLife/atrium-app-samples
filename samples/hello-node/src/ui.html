@@ -8,10 +8,11 @@
   <link rel="stylesheet" href="/design/coho.css">
 </head>
 <body>
-  <!-- Icons this page uses, copied from design/icons.svg (COHO design guide, section 15.2). -->
+  <!-- Icons this page uses, copied from design/icons.svg (COHO design guide, section 16.2, Take the markup). -->
   <svg xmlns="http://www.w3.org/2000/svg" hidden>
     <symbol id="icon-tick" viewBox="0 0 30 30"><path d="m9.41662426 13.5369317c-.77971492-.7823799-2.04604304-.7845404-2.828423-.0048255-.78237997.779715-.78454041 2.0460431-.00482549 2.828423l5.03406323 5.0512696c.7815969.7842683 2.0516517.7842683 2.8332485 0l9.9659368-10c.7797149-.78238.7775544-2.0487081-.0048255-2.82842303-.78238-.77971492-2.0487081-.77755448-2.828423.00482549l-8.5493125 8.57853374z"/></symbol>
     <symbol id="icon-cross" viewBox="0 0 30 30"><path d="m10.4142136 7.58578644 4.5857864 4.58521356 4.5857864-4.58521356c.7399408-.73994077 1.915425-.77888502 2.7012124-.11683275l.1272148.11683275c.7810485.78104858.7810485 2.04737854 0 2.82842716l-4.5852136 4.5857864 4.5852136 4.5857864c.7810485.7810486.7810485 2.0473786 0 2.8284272-.7810486.7810485-2.0473786.7810485-2.8284272 0l-4.5857864-4.5852136-4.5857864 4.5852136c-.7399408.7399407-1.91542496.778885-2.70121239.1168327l-.12721477-.1168327c-.78104859-.7810486-.78104859-2.0473786 0-2.8284272l4.58521356-4.5857864-4.58521356-4.5857864c-.78104859-.78104862-.78104859-2.04737858 0-2.82842716.78104858-.78104859 2.04737854-.78104859 2.82842716 0z"/></symbol>
+    <symbol id="icon-drag-handle" viewBox="0 0 448 512"><path d="M416 304H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32zm0-192H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"/></symbol>
   </svg>
 
   <main class="u-padding-left--20 u-padding-right--20">
@@ -34,6 +35,19 @@
         </thead>
         <tbody>{{probeRows}}</tbody>
       </table>
+    </section>
+
+    <section class="page__section page__section--narrow">
+      <div class="heading--section">
+        <h2 class="heading--2">Checklist</h2>
+      </div>
+      <p>Drag a step by its handle to change the order, or focus the handle and use Space and the arrow keys. The order is saved for this connection and kept across reloads.</p>
+      <div class="card__detail--step-wrapper">
+        <div class="card__detail--step-list">{{checklistRows}}</div>
+      </div>
+      <div id="order-error" class="form__message form__message--error u-margin-top--10" role="alert" hidden>
+        <div class="form__message-text u-padding--10">The order could not be saved. Try again.</div>
+      </div>
     </section>
 
     <div class="button__group">
@@ -63,6 +77,27 @@
     parent.postMessage({ type: 'atrium.quickView.ready' }, parentOrigin);
     document.getElementById('close').addEventListener('click', function () {
       parent.postMessage({ type: 'atrium.quickView.close' }, parentOrigin);
+    });
+  </script>
+  <script src="/design/reorder.js"></script>
+  <script>
+    // The checklist's save call: the only drag-related code on the page (COHO design guide, section 11, Reorderable list).
+    // The server mints the page token into the page at launch; it authorises this page's own requests.
+    var checklist = {{checklistJson}};
+    var list = document.querySelector('.card__detail--step-list');
+    var orderError = document.getElementById('order-error');
+    list.addEventListener('coho:reorder', function (event) {
+      orderError.hidden = true;
+      event.detail.save(fetch('/steps/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionReference: checklist.connectionReference, token: checklist.token, order: event.detail.ids })
+      }).then(function (response) {
+        if (!response.ok) throw new Error('Save failed: ' + response.status);
+      }).catch(function (error) {
+        orderError.hidden = false;
+        throw error; // rethrown so the reorder script puts the rows back
+      }));
     });
   </script>
 </body>

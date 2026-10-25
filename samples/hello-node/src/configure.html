@@ -20,5 +20,15 @@
       <p class="u-text--small u-text-color--grey">Runtime: Node http.</p>
     </section>
   </main>
+  <script>
+    // External page, opened in a new tab: the signed URL names the theme and there is no COHO parent to post updates.
+    function applyTheme(theme) {
+      var next = theme === 'dark' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      document.body.classList.toggle('coho__dark', next === 'dark');
+    }
+    var fromQuery = new URLSearchParams(location.search).get('theme');
+    if (fromQuery === 'dark' || fromQuery === 'light') applyTheme(fromQuery);
+  </script>
 </body>
 </html>

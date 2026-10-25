@@ -23,6 +23,21 @@ export const connections = new Map();
 /** @type {Map<string, Record<string, unknown>>} */
 export const configs = new Map();
 
+/**
+ * The checklist on the quick view (COHO design guide, section 11). Its order is the app's own state, kept per connection.
+ * @type {{ id: string, name: string, due: string }[]}
+ */
+export const STEPS = [
+  { id: 'inspect', name: 'Inspect the property', due: 'Due today' },
+  { id: 'report', name: 'Send the inspection report', due: 'Due tomorrow' },
+  { id: 'invoice', name: 'Raise the invoice', due: 'Due in 3 days' },
+];
+/** @type {Map<string, string[]>} */
+export const stepOrders = new Map();
+
+/** How long the page token the quick view sends back with its own requests stays valid. */
+export const PAGE_TOKEN_TOLERANCE_SECONDS = 60 * 60;
+
 /** @type {string} */
 export let stateFile = '';
 
@@ -58,6 +73,7 @@ export function setOutboundFetch(fetchImpl) {
 export function resetState() {
   connections.clear();
   configs.clear();
+  stepOrders.clear();
   stateFile = '';
   outboundFetch = globalThis.fetch.bind(globalThis);
 }
@@ -135,6 +151,81 @@ export function verifyAtriumSignature(
 }
 
 /**
+ * A token the quick view sends back with its own requests (the checklist's save). Minted into the page at launch, after
+ * the launch signature has been verified, and bound to the connection with the connection's signing secret.
+ * @param {string} connectionReference
+ * @param {string} signingSecret
+ * @param {Date} [now]
+ */
+export function mintPageToken(connectionReference, signingSecret, now = new Date()) {
+  const timestamp = Math.floor(now.getTime() / 1000);
+  const v1 = crypto
+    .createHmac('sha256', signingSecret)
+    .update(`page.${timestamp}.${connectionReference}`, 'utf8')
+    .digest('hex');
+  return `t=${timestamp},v1=${v1}`;
+}
+
+/**
+ * @param {unknown} token
+ * @param {string} connectionReference
+ * @param {string | undefined} signingSecret
+ * @param {Date} [now]
+ * @param {number} [toleranceSeconds]
+ */
+export function verifyPageToken(
+  token,
+  connectionReference,
+  signingSecret,
+  now = new Date(),
+  toleranceSeconds = PAGE_TOKEN_TOLERANCE_SECONDS,
+) {
+  if (typeof token !== 'string' || !connectionReference || !signingSecret) return false;
+  const match = /^t=(\d+),v1=([0-9a-f]{64})$/.exec(token.trim());
+  if (!match) return false;
+  const timestamp = Number.parseInt(match[1], 10);
+  const nowSeconds = now.getTime() / 1000;
+  if (timestamp > nowSeconds + MAX_FUTURE_SKEW_SECONDS) return false;
+  if (nowSeconds - timestamp > toleranceSeconds) return false;
+  const expected = crypto
+    .createHmac('sha256', signingSecret)
+    .update(`page.${timestamp}.${connectionReference}`, 'utf8')
+    .digest('hex');
+  const expectedBuf = Buffer.from(expected, 'utf8');
+  const actualBuf = Buffer.from(match[2], 'utf8');
+  return expectedBuf.length === actualBuf.length && crypto.timingSafeEqual(expectedBuf, actualBuf);
+}
+
+/** True when order lists every step id exactly once. @param {unknown} order */
+export function isStepOrder(order) {
+  return (
+    Array.isArray(order) &&
+    order.length === STEPS.length &&
+    new Set(order).size === order.length &&
+    STEPS.every((step) => order.includes(step.id))
+  );
+}
+
+/**
+ * The steps in the order saved for the connection, or the default order.
+ * @param {string} connectionReference
+ */
+export function orderedSteps(connectionReference) {
+  const order = stepOrders.get(connectionReference);
+  if (!isStepOrder(order)) return STEPS.slice();
+  return /** @type {string[]} */ (order).map((id) => STEPS.find((step) => step.id === id));
+}
+
+/**
+ * @param {string} connectionReference
+ * @param {string[]} order
+ */
+export async function storeStepOrder(connectionReference, order) {
+  stepOrders.set(connectionReference, order.slice());
+  await persistState();
+}
+
+/**
  * @param {string} connectionReference
  * @returns {ConnectionState | undefined}
  */
@@ -152,26 +243,9 @@ export function loadSecret(connectionReference) {
   return loadConnection(connectionReference)?.signingSecret;
 }
 
-export const DEFAULT_FRAME_ANCESTORS =
-  'http://localhost:4200';
-
-function uniqueAncestorTokens(...lists) {
-  const seen = new Set();
-  const out = [];
-  for (const list of lists) {
-    for (const token of String(list || '').split(/\s+/)) {
-      if (!token || seen.has(token)) continue;
-      seen.add(token);
-      out.push(token);
-    }
-  }
-  return out.join(' ');
-}
-
 export function sanitizeFrameAncestors(value) {
   const trimmed = String(value ?? '').trim();
-  const noneOnly = trimmed && trimmed.split(/\s+/).every((tok) => tok === "'none'");
-  let safe = true;
+  if (!trimmed) return "'none'";
   for (const character of trimmed) {
     const code = character.codePointAt(0) ?? 0;
     const isAlphaNumeric =
@@ -180,15 +254,10 @@ export function sanitizeFrameAncestors(value) {
       (code >= 97 && code <= 122);
     const isPunctuation = " '*.:/-_".includes(character);
     if (!isAlphaNumeric && !isPunctuation) {
-      safe = false;
-      break;
+      return "'none'";
     }
   }
-  const parent = process.env.ATRIUM_PARENT_ORIGIN ? parentOrigin() : '';
-  if (!trimmed || noneOnly || !safe) {
-    return uniqueAncestorTokens(DEFAULT_FRAME_ANCESTORS, parent);
-  }
-  return uniqueAncestorTokens(trimmed, parent);
+  return trimmed;
 }
 
 export function parentOrigin() {
@@ -235,20 +304,42 @@ function fillTemplate(template, values) {
 }
 
 /**
+ * The checklist's rows: COHO's workflow checklist row, as the guide documents it (section 11). The reorder script finds
+ * the list and the handles by their classes; data-id is what the save call sends back.
+ * @param {{ id: string, name: string, due: string }[]} steps
+ */
+function checklistRows(steps) {
+  return steps
+    .map(
+      (step, index) =>
+        `<div class="card__detail--step-holder" data-id="${escapeHtml(step.id)}">` +
+        '<div class="card__detail--step-drag"><span class="icon icon--light-grey"><svg class="icon-drag-handle" aria-hidden="true"><use href="#icon-drag-handle"></use></svg></span></div>' +
+        `<div class="card__detail--step-checkbox"><span class="card__detail--step-index">${index + 1}</span>` +
+        `<label class="form__checkbox form__input--small"><input type="checkbox" aria-label="${escapeHtml(step.name)} done"><div class="form__checkbox-label"></div></label></div>` +
+        `<div class="card__detail--step-description"><p>${escapeHtml(step.name)}</p>` +
+        `<div class="card__detail--step-meta"><p class="u-text-color--grey u-text--small">${escapeHtml(step.due)}</p></div></div>` +
+        '</div>',
+    )
+    .join('');
+}
+
+/**
  * Quick view page, built to the COHO design guide (design/design.md) from src/ui.html.
  * Icons come from the hidden sprite in the template, copied from design/icons.svg.
  * @param {string} greeting
  * @param {string} allowedParentOrigin
  * @param {ProbeResult[]} probes
+ * @param {{ steps: { id: string, name: string, due: string }[], connectionReference: string, pageToken: string }} [checklist]
+ *   The checklist in its saved order, and what its save call sends back. Both values are the server's own, not the caller's.
  */
-export function quickViewHtml(greeting, allowedParentOrigin, probes) {
+export function quickViewHtml(greeting, allowedParentOrigin, probes, checklist) {
   const probeRows = probes
     .map((probe) => {
       const statusLabel = probe.status > 0 ? String(probe.status) : 'n/a';
       const detail = probe.error ? probe.error : statusLabel;
       const icon = probe.ok
-        ? '<span class="icon icon--small icon--inline icon--green-xdark"><svg class="icon-tick" aria-hidden="true"><use href="#icon-tick"></use></svg></span>'
-        : '<span class="icon icon--small icon--inline icon--warning"><svg class="icon-cross" aria-hidden="true"><use href="#icon-cross"></use></svg></span>';
+        ? '<span class="icon icon--small icon--inline"><svg class="icon-tick icon--green-xdark" aria-hidden="true"><use href="#icon-tick"></use></svg></span>'
+        : '<span class="icon icon--small icon--inline"><svg class="icon-cross icon--warning" aria-hidden="true"><use href="#icon-cross"></use></svg></span>';
       return (
         `<tr><td class="width-120">${escapeHtml(probe.capability)}</td>` +
         `<td class="width-f-200 one-line"><code>${escapeHtml(probe.path)}</code></td>` +
@@ -260,6 +351,11 @@ export function quickViewHtml(greeting, allowedParentOrigin, probes) {
   return fillTemplate(quickViewTemplate, {
     greeting: escapeHtml(greeting),
     probeRows,
+    checklistRows: checklistRows(checklist ? checklist.steps : STEPS),
+    checklistJson: JSON.stringify({
+      connectionReference: checklist ? checklist.connectionReference : '',
+      token: checklist ? checklist.pageToken : '',
+    }),
     parentOriginJson: JSON.stringify(allowedParentOrigin),
   });
 }
@@ -305,13 +401,18 @@ export async function loadState() {
   for (const [reference, config] of Object.entries(persistedConfigs)) {
     configs.set(reference, config);
   }
+
+  const persistedStepOrders = state.stepOrders || {};
+  for (const [reference, order] of Object.entries(persistedStepOrders)) {
+    if (isStepOrder(order)) stepOrders.set(reference, /** @type {string[]} */ (order));
+  }
 }
 
 async function persistStateLocked() {
   if (!stateFile) return;
 
-  /** @type {{ connections: Record<string, { signingSecret: string, apiKey?: string, apiBaseUrl?: string }>, configs: Record<string, Record<string, unknown>> }} */
-  const state = { connections: {}, configs: {} };
+  /** @type {{ connections: Record<string, { signingSecret: string, apiKey?: string, apiBaseUrl?: string }>, configs: Record<string, Record<string, unknown>>, stepOrders: Record<string, string[]> }} */
+  const state = { connections: {}, configs: {}, stepOrders: {} };
   for (const [reference, connection] of connections.entries()) {
     if (!connection.signingSecret) continue;
     state.connections[reference] = {
@@ -322,6 +423,9 @@ async function persistStateLocked() {
   }
   for (const [reference, config] of configs.entries()) {
     state.configs[reference] = config;
+  }
+  for (const [reference, order] of stepOrders.entries()) {
+    state.stepOrders[reference] = order;
   }
 
   const data = JSON.stringify(state);
@@ -357,6 +461,7 @@ export async function storeConnectionState(connectionReference, state) {
 export async function deleteConnectionState(connectionReference) {
   connections.delete(connectionReference);
   configs.delete(connectionReference);
+  stepOrders.delete(connectionReference);
   await persistState();
 }
 

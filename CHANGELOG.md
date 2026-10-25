@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-25 — private GitHub source / Connect guidance
+
+- Developer spec §5.5: hosted source choice table (public GitHub / private GitHub / zip / self-host); Connect is browser-only; Selected repositories (not All); shared-install trust boundary
+- Republish developer spec and hello samples from HouseShare SoT (`bf4644ec01`)
+
 ## 2026-10-24 — web app default; agent sample as exception
 
 - Developer spec §2 / §6: default sample manifest and surface guidance is web app + `quickViewPath`; agent/config-only is a rare exception

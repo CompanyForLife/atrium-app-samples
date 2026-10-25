@@ -231,30 +231,16 @@ def store_config_state(connection_reference: str, config: dict[str, Any]) -> Non
         _persist_state_locked()
 
 
-DEFAULT_FRAME_ANCESTORS = "http://localhost:4200"
-
-
-
-def _unique_tokens(*lists: str) -> str:
-    seen: set[str] = set()
-    out: list[str] = []
-    for list_value in lists:
-        for token in list_value.split():
-            if not token or token in seen:
-                continue
-            seen.add(token)
-            out.append(token)
-    return " ".join(out)
-
-
 def sanitize_frame_ancestors(value: str | None) -> str:
     trimmed = (value or "").strip()
+    if not trimmed:
+        return "'none'"
     allowed = set(" *.://-_")
-    none_only = bool(trimmed) and all(token == "'none'" for token in trimmed.split())
-    safe = all(character.isalnum() or character in allowed for character in trimmed) if trimmed else False
-    if not trimmed or none_only or not safe:
-        return _unique_tokens(DEFAULT_FRAME_ANCESTORS, parent_origin())
-    return _unique_tokens(trimmed, parent_origin())
+    for character in trimmed:
+        if character.isalnum() or character in allowed:
+            continue
+        return "'none'"
+    return trimmed
 
 
 def parent_origin() -> str:

@@ -1,8 +1,6 @@
 # Atrium hello-python
 
-**Class: web app (default).** Minimal Atrium app with a quick view at `/ui`, using Python stdlib (`http.server`, `hmac`, `hashlib`, `urllib`).
-
-Start here for almost every product. For the rare background-only exception (no UI), see [`hello-agent-node`](../hello-agent-node).
+Minimal Atrium web app using Python stdlib (`http.server`, `hmac`, `hashlib`, `urllib`).
 
 Default port: **5101** (`PORT` env override).
 
@@ -12,7 +10,7 @@ Default port: **5101** (`PORT` env override).
 python3 app.py
 ```
 
-Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. That is your app's own setup secret: COHO mints it when you register the app and shows it once in the create response (regenerate it from My apps if lost). On Atrium Hosting, COHO injects the env var for you; when self-hosting, set it yourself before connecting. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts (`hello-python-state.json`). On Atrium Hosting, COHO injects `ATRIUM_FRAME_ANCESTORS` and `ATRIUM_PARENT_ORIGIN` (one Store origin per environment). Treat those as the source of truth — do not bake a domain list into the image. Local-only fallback when unset is `http://localhost:4200`.
+Your process reads `ATRIUM_SETUP_SECRET` to verify the first `lifecycle.setup` call. That is your app's own setup secret: COHO mints it when you register the app and shows it once in the create response (regenerate it from My apps if lost). On Atrium Hosting, COHO injects the env var for you; when self-hosting, set it yourself before connecting. Set `ATRIUM_DATA_DIR` to persist connection secrets and config across restarts (`hello-python-state.json`). Set `ATRIUM_FRAME_ANCESTORS` to the COHO origin allowed to embed `/ui`, and set `ATRIUM_PARENT_ORIGIN` to that exact origin for the close message (for example `http://localhost:4200` in local development).
 
 No pip install required.
 

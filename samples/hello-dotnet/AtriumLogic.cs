@@ -707,57 +707,25 @@ public static class AtriumLogic
         }
     }
 
-    public const string DefaultFrameAncestors = "http://localhost:4200";
-
     public static string SanitizeFrameAncestors(string? value)
     {
         value = (value ?? "").Trim();
-        var parent = string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ATRIUM_PARENT_ORIGIN"))
-            ? ""
-            : ParentOrigin();
-        if (value.Length == 0 || IsNoneOnly(value) || !IsSafeSourceList(value))
+        if (value.Length == 0)
         {
-            return UniqueTokens(DefaultFrameAncestors, parent);
+            return "'none'";
         }
 
-        return UniqueTokens(value, parent);
-    }
-
-    static bool IsNoneOnly(string value) =>
-        value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .All(token => token == "'none'");
-
-    static bool IsSafeSourceList(string value)
-    {
         foreach (var character in value)
         {
             var isAlphaNumeric = character is (>= '0' and <= '9') or (>= 'A' and <= 'Z') or (>= 'a' and <= 'z');
             var isPunctuation = " '*.:/-_".Contains(character);
             if (!isAlphaNumeric && !isPunctuation)
             {
-                return false;
+                return "'none'";
             }
         }
 
-        return true;
-    }
-
-    static string UniqueTokens(params string[] lists)
-    {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        var outList = new List<string>();
-        foreach (var list in lists)
-        {
-            foreach (var token in list.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            {
-                if (seen.Add(token))
-                {
-                    outList.Add(token);
-                }
-            }
-        }
-
-        return string.Join(' ', outList);
+        return value;
     }
 
     public static string ParentOrigin()

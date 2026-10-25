@@ -7,9 +7,6 @@ This is the pack to send an app developer (or their AI). It is the external cont
 Before a **public** catalogue listing, COHO will ask you to pass a quality-gate checklist (shared separately at listing time). Private org apps only need this runtime contract.
 
 **Not in this spec:** COHO CLI, listing review UI, billing, how COHO staffs its own seed apps, or the internals of the Hosting control plane (ECS / ALB / provisioner). If COHO runs your image, the Dockerfile contract is §5.6.
-<!-- atrium-publish:omit-start -->
-Internal COHO seed staffing (own CFL repos, Node/TS, storage, Idea Factory cards): [feature-plans/atrium-seed-app-standards.md](feature-plans/atrium-seed-app-standards.md).
-<!-- atrium-publish:omit-end -->
 
 ---
 
@@ -65,7 +62,7 @@ registered **base URL**. Browser-facing paths are relative to
 }
 ```
 
-This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json` (or hello-python / hello-go / hello-dotnet). Starter manifests may still say `"mode": "both"` — that is the legacy spelling of native + external for the same web-app surface; `"native+embedded+external"` here is the explicit form. Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent — then use `samples/hello-agent-node` and read its README (§6).
+This sample is a **web app** (quick view). That is the default for almost every product. Match `samples/hello-node/manifest.example.json` (or hello-python / hello-go / hello-dotnet in atrium-app-samples). Starter manifests may still say `"mode": "both"` — that is the legacy spelling of native + external for the same web-app surface; `"native+embedded+external"` here is the explicit form. Do **not** start from a null `quickViewPath` unless you have confirmed a true background agent — then use `samples/hello-agent-node` and read its README (§6).
 
 | Field | Meaning |
 |---|---|
@@ -207,7 +204,7 @@ Published event keys (subscribe via `triggers.events`; delivery requires the Sto
 | `onboarding.completed` | Onboarding reaches completed |
 | `onboarding.cancelled` | Onboarding is cancelled |
 | `property.updated` | Property listing / lettings-relevant fields change |
-| `room.availability.changed` | Room availability / available-from (or equivalent) changes |
+| `room.availability.changed` | Room `AvailableFrom` is persisted with a new value (any manager / Public API / occupancy path that saves that change) |
 | `maintenance.created` | A maintenance issue is created (including convert-from-conversation) |
 | `message.created` | A conversation message is saved as Sent (references only; no body) |
 | `atrium.test` | Manager hits **Run test** in the Store (not a domain event) |
@@ -317,15 +314,10 @@ The Store shows healthy / degraded / paused with the latest message. Catalogue l
 - Base: `{apiBaseUrl}/v1.1/public/`
 - Auth: `Authorization: Bearer <apiKey>` from setup
 - OpenAPI: [Scalar COHO Public API 1.1](https://api.coho.life/scalar) — authoritative for request/response shapes
-<!-- atrium-publish:omit-start -->
-- Internal inventory: [public-api-endpoints.md](public-api-endpoints.md). Lifecycle: [public-api-lifecycle.md](public-api-lifecycle.md).
-- Do **not** use `/v1/public` or `/v1.0/public` (deprecated; sunset 6 October 2026). Migrate with `https://api.coho.life/docs/public-api/v1.0-to-v1.1` (source: `docs/public-api-v10-to-v11-migration.md`).
-- Never use HouseShare database ids. Use Guids / references from the API.
-<!-- atrium-publish:omit-end -->
 - Use Guids / references from the API — never database integer ids.
 - `GET /v1.1/public/conversations?afterTime=` returns conversations whose last activity is after that UTC time.
 - Conversation messages include `medium` and `isAutomated`. `isAutomated` is `true` when the sender is an App Connection principal (Store-connected app), otherwise `false`.
-- `POST /v1.1/public/conversations` accepts `medium` `COHO_MESSENGER` (default), `EMAIL`, `SMS`, or `WHATSAPP`. Email/SMS broadcasts require `AllowReplies=false`. SMS send calculates segments and debits landlord SMS credits server-side (optional `GET /organisation/credits?type=SMS` and `POST /organisation/sms-credit-quote` with `body` to inspect cost). Do not send client-calculated `SmsSettings`. WhatsApp needs an active org connection.
+- `POST /v1.1/public/conversations` accepts `medium` `COHO_MESSENGER` (default), `EMAIL`, `SMS`, or `WHATSAPP`. Email/SMS broadcasts require `AllowReplies=false`. SMS send calculates segments and debits landlord SMS credits server-side (optional `GET /organisation/credits?type=SMS` and `POST /organisation/sms-credit-quote` with `body` to inspect cost). There is no client `SmsSettings` field on create. WhatsApp needs an active org connection.
 - `GET /v1.1/public/conversations/{reference}/messages?includeDrafts=true` includes Draft messages; `DELETE .../messages/{messageGuid}` removes a draft; `PATCH .../messages/{messageGuid}` updates a draft and/or promotes it to Sent.
 - Property tenants, tenancy tenants, and conversation recipients expose `messagingRestricted`. Create and sent replies refuse restricted housemates (maintenance threads stay writable).
 - `POST /v1.1/public/conversations/{reference}/messages` replies on an existing thread. Optional `files`, `idempotencyKey` (Redis, 24h), and per-recipient `recipients` (`sent` / `skipped` / `noEmail`). Public API send does not mark the thread read for the sender. SMS rejects attachments; WhatsApp allows at most one; email and COHO Messenger allow up to 10. Sent WhatsApp replies enqueue the existing manager WhatsApp follow-up.
@@ -338,6 +330,7 @@ The Store shows healthy / degraded / paused with the latest message. Catalogue l
 - `POST /v1.1/public/organisation/notify-managers` sends an in-app notification (`organisation.write`) with a same-origin `linkPath` starting with `/`.
 - `GET /v1.1/public/guarantors` pages organisation guarantor details (`tenancies.read`). Org-wide Right to Rent remains `GET /v1.1/public/right-to-rent/report`.
 - Creating or converting a maintenance issue returns `tenantUrl` only when the issue is shared with the tenant.
+- Maintenance issues include `assignedOrganisationPersonGuid`, `supplierGuid` and `updated`; `GET maintenance` accepts `detailedStatuses`. Viewings include their state (`agreedDate`, `invitedByManager`, `applicantResponse`, `managerResponse`, `outcome`, `proposedDateSet`), assignee and timestamps. Tenancy tenants include `cohoAccountStatus` and `dateInvitedToCoho`. `GET organisation/users` includes `personReference`, which matches the usage token's `personReference` claim.
 
 ### 5.2 Store logs
 
@@ -352,9 +345,6 @@ Organisation-owned app registration (manager API keys; Store Build an app parity
 - `POST /v1.1/public/atrium/apps/{appReference}/hosted-update` — update hosted source / reprovision
 
 Partner publisher public API is not shipped yet (manage + MCP only).
-<!-- atrium-publish:omit-start -->
-See [feature-plans/atrium-public-api-mcp-apps.md](feature-plans/atrium-public-api-mcp-apps.md).
-<!-- atrium-publish:omit-end -->
 
 
 ```json
@@ -499,20 +489,32 @@ MCP is a capability of COHO Atrium, not a separately named product. Managers con
 
 Registering and updating hosted apps is available over MCP. **Connecting GitHub is not** — it is an OAuth-style install that has to happen in a browser, so it stays a Store / publisher-portal action (§5.5). Once GitHub is connected, MCP registration of a private repository works exactly like a public one.
 
-### 5.5 Private GitHub sources (Atrium Hosting)
+### 5.5 Hosted source choices (GitHub private / public / zip)
+
+Decide the source **before** you need a Hosting build. AI agents cannot complete GitHub App install or Connect for you — those are browser steps for a human.
+
+| Source | Use when | Human steps |
+|---|---|---|
+| **Public GitHub** | Code can be public | Register `https://github.com/<org>/<repo>` — no Connect |
+| **Private GitHub** | Repo stays private | 1) **Connect GitHub** in the Store / publisher portal. 2) A GitHub **org owner** adds the repo to the COHO Atrium App under **Selected repositories** (do not switch the install to All repositories). 3) Register / rebuild |
+| **Zip upload** | No GitHub, or App install cannot be changed | Upload a source zip in the Store; re-upload when the code changes |
+| **Self-host** | You already run HTTPS | Register base URL + manifest; skip Hosting |
+
+#### Private GitHub details
 
 Atrium Hosting can build from a **private** GitHub repository. COHO never holds a personal access token or deploy key: access comes from a GitHub App installation that you control and can revoke from GitHub at any time.
 
 1. In the Store (managers) or the publisher portal (publishers), choose **GitHub repository** as the source and select **Connect GitHub**.
-2. GitHub asks which account and which repositories to grant. Grant only the repositories you want COHO to build.
-3. You are returned to COHO and the connection is recorded against your organisation or publisher account. One connection covers every hosted app you own.
+2. GitHub asks which account and which repositories to grant. Grant **only** the repositories you want COHO to build (**Selected repositories**).
+3. You are returned to COHO and the connection is recorded against your organisation or publisher account. One connection covers every hosted app you own — but each **new** private repo still needs adding to that Selected list by a GitHub org owner.
+4. Register or update with the plain `https://github.com/<org>/<repo>` URL. There is no separate "private" flag. Register rejects a private URL when Connect is missing or the App cannot see the repo (you should not reach a generic "Provisioning failed unexpectedly" for that case).
 
 What this means in practice:
 
-- Register or update the app with the plain `https://github.com/<org>/<repo>` URL. There is no separate "private" flag.
 - Each build mints a fresh, short-lived token from the installation. Nothing long-lived is stored, and the token never reaches your image.
 - Uninstalling the App, suspending it, or removing a repository from the installation stops future builds of anything that needs it. Already-running apps keep running; the next provision fails with a message telling you to reconnect.
 - Public repositories still work with no connection at all.
+- If several COHO organisations Connect the **same** GitHub App installation, every private repository on that install’s Selected list is buildable by each of those organisations. Keep customer or partner private repos on an install that only their COHO accounts bind — do not share one installation across trust boundaries.
 
 COHO reads only repository contents and metadata. It does not subscribe to push events, so pushing to your repository does **not** trigger a deploy — you still update the app explicitly.
 
@@ -532,7 +534,7 @@ When the Store registers your app as **COHO-hosted**, CodeBuild builds your repo
 
 **Why Hosting sets 65532:** the `/data` volume is an EFS access point owned by `65532:65532`. ECS on EC2 chowns an empty mount to the task user. If the process ran as another UID (Node `USER node` at 1000, Microsoft aspnet `USER app` at 1654), the task never starts: `CannotCreateContainerError` / `lchown ... operation not permitted`, and provision times out as Failed. Hosting therefore sets the ECS container `user` to `65532:65532` so those Dockerfiles still boot. Access points also reject `lchown` to the same UID, so Hosting creates `/{app}/.keep` owned by 65532 on the filesystem before the first real task so Docker skips copy+chown on an empty volume. Keep application files readable by that user (avoid `chmod 700` trees owned only by another UID). Writing belongs under `ATRIUM_DATA_DIR` (`/data`).
 
-`samples/atrium/hello-go` already uses distroless `nonroot` (65532). You do not need to remap `USER` in the Dockerfile.
+`samples/hello-go` already uses distroless `nonroot` (65532). You do not need to remap `USER` in the Dockerfile.
 
 Self-hosted apps ignore this section — you own the process and the disk.
 
@@ -562,10 +564,11 @@ signed launch URL (`GET`, empty body) with:
 | Query | Role |
 |---|---|
 | `connectionReference` | Which org connection opened |
-| `atriumUsageToken` | Short-lived JWT: signed-in **person + organisation + connection** (≈15 minutes). Use as `Authorization: Bearer` for interactive Public API calls. |
+| `atriumUsageToken` | Short-lived JWT: signed-in **person + organisation + connection** (≈15 minutes). Use as `Authorization: Bearer` for interactive Public API calls. Remint while open via the postMessage bridge — do not treat expiry as “close the app”. |
+| `theme` | Opening manager's COHO UI theme: `light` or `dark` (from persisted `User.DarkMode`, not OS preference). Covered by `atriumSignature` — use for first paint. |
 | `atriumSignature` | HMAC over the launch GET (same scheme as other signed GETs) |
 
-Verify `atriumSignature` the same way as other signed GETs. Read person/org from the usage JWT claims (`personReference`, `organisationReference`, `connectionReference`) after verifying it with COHO — do not trust unsigned query params for identity.
+Verify `atriumSignature` the same way as other signed GETs. Read person/org from the usage JWT claims (`personReference`, `organisationReference`, `connectionReference`) after verifying it with COHO — do not trust unsigned query params for identity. `theme` is a UI hint only (safe after signature verify); it is not an auth claim.
 
 You must:
 
@@ -574,6 +577,7 @@ You must:
 - Treat the page as **third-party chrome** — no requirement to match COHO CSS.
 - Never put the API key or signing secret in the query string. The launch signature is not a substitute for checking method, path, and connection.
 - For interactive UI calls, prefer `Authorization: Bearer <atriumUsageToken>`. Effective scopes are **connection grant ∩ opening person's role**. Keep the connection API key for background/webhooks only.
+- Keep the Bearer fresh for as long as the quick view stays open: listen for COHO remints and update your client. You cannot mint a usage token yourself.
 
 `lifecycle.setup` does **not** carry iframe parents (connect is the wrong place to pin CSP — a domain move should not require reconnect). Hosting injects `PORT`, `ATRIUM_DATA_DIR`, `ATRIUM_SETUP_SECRET`, `ATRIUM_FRAME_ANCESTORS`, and `ATRIUM_PARENT_ORIGIN` into the container at provision time.
 
@@ -582,8 +586,15 @@ Thin `postMessage` bridge (parent is COHO):
 | Message `type` | Direction | Role |
 |---|---|---|
 | `atrium.quickView.close` | app → COHO | Close the shell |
+| `atrium.quickView.ready` | app → COHO | Optional. Ask the host to (re)send theme after your page boots. |
+| `atrium.quickView.theme` | COHO → app | `{ theme: "light" \| "dark" }`. Sent on iframe load, on `ready`, and when the manager toggles dark mode while the shell is open. |
+| `atrium.usageToken.refresh` | app → COHO | Ask COHO to remint a usage JWT (optional `requestId`) |
+| `atrium.usageToken` | COHO → app | Fresh `{ atriumUsageToken, expiresAt }` (optional `requestId`) — keep iframe state; do not reload |
+| `atrium.usageToken.error` | COHO → app | Remint failed; tell the manager to close and reopen |
 
-Resize, open-full-app, and toast are reserved on the same bridge; do not invent parallel channels.
+Apps may ignore theme messages. Matching COHO CSS is not required — this is optional host context for third-party chrome. Check `event.origin` against your allowed COHO parent origins before applying theme. Prefer the signed `theme` query for first paint, then listen for live updates.
+
+COHO also remints the usage JWT proactively about every 12 minutes and when the manager’s tab becomes visible again. The Node kit helpers `subscribeAtriumQuickViewTheme` and `createUsageTokenSession` wire theme and token refresh. Resize, open-full-app, and toast remain reserved on the same bridge; do not invent parallel channels.
 
 ### External URL
 
@@ -607,7 +618,7 @@ one-off actions do **not**. The Store will not offer **Open quick view**. If you
 omit `quickViewPath`, write down why the product has no interactive manager surface
 before you list.
 
-Reference sample (exception only): [`samples/hello-agent-node`](../samples/hello-agent-node).
+Reference sample (exception only): `CompanyForLife/atrium-app-samples` → `samples/hello-agent-node`.
 Do **not** start from it unless you have confirmed the product has no manager UI.
 The four language hellos (`hello-node`, `hello-python`, `hello-go`, `hello-dotnet`)
 are the standard web-app starters.
@@ -623,9 +634,6 @@ The Store shows each app as a card. The card picture is the app's **first screen
 - The icon is a square PNG, at least 512 x 512, and the picture fills the whole canvas. Do not add rounded corners, a border, a shadow or padding, and do not put a rounded icon on a coloured square: the corners would show. Transparent corners show the card colour behind. COHO rounds the corners itself. With no icon, the card shows the app's initials.
 - The Build an app form warns when an icon has obvious corners.
 
-<!-- atrium-publish:omit-start -->
-Internal: screenshots cannot be set through the listing update yet. `AtriumAppListingUpdatePost` has no screenshot field, and `ScreenshotUrlsJson` is only read. Until the backend adds it, listings get screenshots through seed or ops work. The internal ADK ships `docs/design/atrium/tools/capture-screenshot.js` to take the picture.
-<!-- atrium-publish:omit-end -->
 
 ---
 
@@ -654,7 +662,7 @@ At connect, COHO mints a **background app token** — a machine principal creden
 - Approval updates the existing key's role in place, is audited, and takes effect on the next API request. It does not rotate credentials or rerun `lifecycle.setup`. Disconnect/connect remains the credential-rotation path.
 - Scope removal is not automatic. A future explicit downgrade/revoke flow owns that case.
 
-**Interactive open (quick view / external configure):** COHO also mints a short-lived **usage JWT** (`atriumUsageToken`) bound to the signed-in manager, organisation, and connection. Public API accepts that Bearer as well as the connection API key Guid. On each usage-token request, effective scopes are recomputed as **connection scopes ∩ person scopes** (so a restricted manager cannot outrun their role through an org-installed app). Background triggers keep using the connection `apiKey` only.
+**Interactive open (quick view / external configure):** COHO also mints a short-lived **usage JWT** (`atriumUsageToken`) bound to the signed-in manager, organisation, and connection. Public API accepts that Bearer as well as the connection API key Guid. On each usage-token request, effective scopes are recomputed as **connection scopes ∩ person scopes** (so a restricted manager cannot outrun their role through an org-installed app). While a quick view stays open, COHO remints via the postMessage bridge (`atrium.usageToken`) so interactive sessions can last as long as the manager’s COHO session — apps must swap the Bearer; they cannot mint. Background triggers keep using the connection `apiKey` only.
 
 **Install scope:** Connect can be organisation-wide (default) or **personal** (installer only). Organisation installs may also set a person allow-list; when the allow-list is empty, any member with Store access can open the app. Personal installs keep the org background `apiKey` for schedules/webhooks, but only the installing manager appears in My apps and can open the interactive UI. That is the dual-credential model: background org key + interactive person usage JWT.
 
@@ -697,15 +705,15 @@ Full catalogue ids appear in the Store capability picker (`conversations.read` /
 
 ## 9. Official connecting kit (starter samples)
 
-This spec, the signature test vectors (§3.1.1), and the hello-world samples are the **official Atrium connecting kit**. There is **no npm / NuGet / PyPI SDK package** — by design. Copy a hello, keep the signature verify + lifecycle paths, delete what you do not need. Public snapshot: [CompanyForLife/atrium-app-samples](https://github.com/CompanyForLife/atrium-app-samples).
+This spec, the signature test vectors (§3.1.1), and the four hello-world samples are the **official Atrium connecting kit**. There is **no npm / NuGet / PyPI SDK package** — by design. Copy a hello, keep the signature verify + lifecycle paths, delete what you do not need. Public snapshot: [CompanyForLife/atrium-app-samples](https://github.com/CompanyForLife/atrium-app-samples).
 
 | Sample | Class | Language |
 |---|---|---|
-| `samples/hello-node` | Web app (default) | Node 20+ |
-| `samples/hello-dotnet` | Web app (default) | .NET minimal API |
-| `samples/hello-python` | Web app (default) | Python 3, standard library only |
-| `samples/hello-go` | Web app (default) | Go, standard library only |
-| `samples/hello-agent-node` | **Agent (exception)** | Node 20+ |
+| `samples/hello-node` (atrium-app-samples) | Web app (default) | Node 20+ |
+| `samples/hello-dotnet` (atrium-app-samples) | Web app (default) | .NET minimal API |
+| `samples/hello-python` (atrium-app-samples) | Web app (default) | Python 3, standard library only |
+| `samples/hello-go` (atrium-app-samples) | Web app (default) | Go, standard library only |
+| `samples/hello-agent-node` (atrium-app-samples) | **Agent (exception)** | Node 20+ |
 
 The four language hellos implement the same **web app** surface: health, signed lifecycle webhooks, signed triggers, native config routes with a schema from §5.3.1, optional disk persistence (`ATRIUM_DATA_DIR`), quick view (`/ui`), external configure (`/configure`), and Public API capability probes in the quick view.
 

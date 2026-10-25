@@ -16,8 +16,11 @@ import {
   connections,
   deleteConnectionState,
   externalConfigHtml,
+  isStepOrder,
   loadSecret,
   loadState,
+  mintPageToken,
+  orderedSteps,
   parentOrigin,
   pathAndQueryForSignature,
   quickViewHtml,
@@ -25,13 +28,16 @@ import {
   sanitizeFrameAncestors,
   storeConfigState,
   storeConnectionState,
+  storeStepOrder,
   verifyAtriumSignature,
+  verifyPageToken,
 } from './lib.js';
 
-// Files from the design folder (COHO stylesheet and icon sprite). Unsigned GETs: the pages link them.
+// Files from the design folder (COHO stylesheet, reorder script and icon sprite). Unsigned GETs: the pages link them.
 const designDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'design');
 const DESIGN_FILES = new Map([
   ['/design/coho.css', { file: path.join(designDir, 'coho.css'), type: 'text/css; charset=utf-8' }],
+  ['/design/reorder.js', { file: path.join(designDir, 'reorder.js'), type: 'text/javascript; charset=utf-8' }],
   ['/design/icons.svg', { file: path.join(designDir, 'icons.svg'), type: 'image/svg+xml' }],
 ]);
 
@@ -350,7 +356,11 @@ export function createRequestListener(options) {
 
         const probes = await runPublicAPIProbes(connectionReference);
         const frameAncestors = sanitizeFrameAncestors(process.env.ATRIUM_FRAME_ANCESTORS);
-        const html = quickViewHtml(greeting, parentOrigin(), probes);
+        const html = quickViewHtml(greeting, parentOrigin(), probes, {
+          steps: orderedSteps(connectionReference),
+          connectionReference,
+          pageToken: mintPageToken(connectionReference, /** @type {string} */ (loadSecret(connectionReference))),
+        });
         sendHtml(res, html, {
           'Content-Security-Policy': `frame-ancestors ${frameAncestors}`,
         });
@@ -360,6 +370,30 @@ export function createRequestListener(options) {
       if (req.method === 'GET' && path === EXTERNAL_CONFIG_PATH) {
         if (!verifyBrowserLaunch(req, res, url)) return;
         sendHtml(res, externalConfigHtml());
+        return;
+      }
+
+      // The quick view's own save for its checklist order, authorised by the page token minted into the page at launch.
+      if (req.method === 'POST' && path === '/steps/order') {
+        const rawBody = await readRawBody(req);
+        let body;
+        try {
+          body = rawBody ? JSON.parse(rawBody) : {};
+        } catch {
+          sendJson(res, 400, { ok: false, message: 'Invalid JSON' });
+          return;
+        }
+        const connectionReference = typeof body?.connectionReference === 'string' ? body.connectionReference : '';
+        if (!verifyPageToken(body?.token, connectionReference, loadSecret(connectionReference))) {
+          sendJson(res, 401, { ok: false, message: 'Invalid page token' });
+          return;
+        }
+        if (!isStepOrder(body.order)) {
+          sendJson(res, 400, { ok: false, message: 'order must list every step id once' });
+          return;
+        }
+        await storeStepOrder(connectionReference, body.order);
+        sendJson(res, 200, { ok: true, order: body.order });
         return;
       }
 

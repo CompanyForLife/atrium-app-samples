@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 // Checks app pages, or the examples inside design.md, against the COHO Atrium design rules.
+// Includes the theme rules: the theme comes from COHO through the theme script (design.md section 1), never hard-coded
+// in markup and never read from the OS. And the reorder rules: a list the user puts in order is reordered by the kit's
+// reorder script (design.md section 11), pasted unchanged or linked, never by a sortable library, native draggable or
+// drag code of the page's own. It reads a page as authored, before any script runs: a rendered page carries what
+// reorder.js adds (its cdk- classes, the handles' tabindex and style locks) and fails.
 //
 //   node docs/design/atrium/tools/check.js my-app.html [more.html ...]
 //   node docs/design/atrium/tools/check.js docs/design/atrium/design.md    (checks every ```html example in the guide)
@@ -16,6 +21,10 @@ const css = fs.readFileSync(cssPath, 'utf8');
 const known = new Set((css.match(/\.-?[_a-zA-Z][\w-]*/g) || []).map(c => c.slice(1)));
 const normalise = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').trim();
 const kitCss = normalise(css);
+// reorder.js sits beside coho.css. A pasted copy is recognised by its first line and must match it after normalising.
+const reorderPath = [path.join(__dirname, 'reorder.js'), path.join(kitDir, 'reorder.js')].find(p => fs.existsSync(p));
+const REORDER_MARK = 'COHO reorder script for Atrium apps';
+const kitReorder = reorderPath ? normalise(fs.readFileSync(reorderPath, 'utf8')) : '';
 
 const files = process.argv.slice(2);
 if (!files.length) {
@@ -35,6 +44,20 @@ function check(name, html, isPage) {
     body = body.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
   }
 
+  // Reorder: a page with a reorderable list carries reorder.js, linked by its name or pasted unchanged in its own block.
+  let hasReorder = /<script\b[^>]+src="[^"]*reorder\.js"/.test(body);
+  let changedReorder = false;
+  for (const s of [...body.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]) {
+    if (!s[1].includes(REORDER_MARK)) continue;
+    if (normalise(s[1]) === kitReorder) hasReorder = true;
+    else { changedReorder = true; fail(name, 'pasted reorder script is not the unchanged reorder.js (paste it into its own <script> block unchanged, or link it)'); }
+    body = body.replace(s[0], '');
+  }
+  if (isPage && /\bcard__detail--step-list\b/.test(body) && !hasReorder && !changedReorder) fail(name, 'has a card__detail--step-list but no reorder script (paste reorder.js into its own <script> block, or link it; design.md section 11, Reorderable list)');
+  if (/<(script|link)\b[^>]+(sortable|dragula|interact\.js|interactjs|draggable|dnd-kit|jquery-ui)/i.test(body)) fail(name, "a drag or sortable library is linked (lists are reordered by the kit's reorder script; design.md section 11, Reorderable list)");
+  if (/draggable="true"/i.test(body)) fail(name, 'draggable="true" in markup (rows are reordered by the kit\'s reorder script through their handles; design.md section 11, Reorderable list)');
+  if (/class="[^"]*\bcdk-/.test(body)) fail(name, 'cdk-* class written into markup (the reorder script adds its own when it wires the list and while a row is dragged, so check the page as authored, not a rendered copy; design.md section 11, Reorderable list)');
+
   const unknown = new Set();
   for (const m of body.matchAll(/class="([^"]*)"/g)) for (const c of m[1].split(/\s+/).filter(Boolean)) if (!known.has(c)) unknown.add(c);
   for (const c of unknown) fail(name, `class "${c}" is not in coho.css (use only classes design.md documents)`);
@@ -42,6 +65,12 @@ function check(name, html, isPage) {
   if (/\sstyle\s*=/.test(body)) fail(name, 'inline style attribute (use the utility classes)');
   if (/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b(?![\w-])/.test(body.replace(/href="#[^"]*"/g, ''))) fail(name, 'hard-coded hex colour (colour comes from the parts and the tokens)');
   if (/<(script|link)\b[^>]+(bootstrap|tailwind|fontawesome|font-awesome|material|heroicons|lucide|primeicons|bootstrap-icons)/i.test(body)) fail(name, 'another UI or icon library is linked');
+
+  // Theme: COHO decides it and the theme script applies it. Never hard-coded, never read from the OS, never missing.
+  if (/class="[^"]*\bcoho__dark\b[^"]*"/.test(body)) fail(name, 'coho__dark hard-coded in markup (the theme script sets it from COHO; design.md section 1)');
+  if (/data-theme="dark"/.test(body)) fail(name, 'data-theme="dark" hard-coded in markup (the theme script sets it from COHO; design.md section 1)');
+  if (/prefers-color-scheme|matchMedia\s*\(/.test(body)) fail(name, 'reads the OS colour scheme (the theme comes from COHO, never from prefers-color-scheme)');
+  if (isPage && !/classList\.toggle\(\s*['"]coho__dark['"]/.test(body)) fail(name, "does not apply COHO's theme (paste the theme script from design.md section 1)");
 
   // Buttons: one primary per view, every button inside a button__group-item.
   const buttonTags = [...body.matchAll(/<(button|a)\b[^>]*class="([^"]*\bbutton\b[^"]*)"[^>]*>/g)];
@@ -69,7 +98,7 @@ function check(name, html, isPage) {
   // Icons: COHO's set only, via <use>, with the inner svg's class naming the same icon as the href.
   for (const m of body.matchAll(/<svg\b([^>]*)>\s*<use\b[^>]*href="#([^"]+)"/g)) {
     const classes = ((m[1].match(/class="([^"]*)"/) || ['', ''])[1]).split(/\s+/);
-    const named = classes.find(c => /^icon-[a-z0-9-]+$/.test(c));
+    const named = classes.find(c => /^icon-[a-z0-9]+(-[a-z0-9]+)*$/.test(c)); // single hyphens: icon--colour is a modifier, not a name
     if (!named) fail(name, `<svg> using #${m[2]} has no icon-<name> class, so it has no size`);
     else if (named !== m[2]) fail(name, `<svg class="${named}"> uses #${m[2]}: the class and the href must name the same icon`);
   }
