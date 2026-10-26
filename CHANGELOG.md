@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-26 — app operations gateway
+
+- Developer spec §3.5: declare `operations[]` for Public API `/v1.1/public/apps/{appReference}/{name}` (`apps.operations`) and MCP `list_app_operations` / `call_app_operation`
+- `effect` is required (`read` | `write` | `delete`); org API keys cannot call personal / allow-listed installs
+
 ## 2026-10-25 — private GitHub source / Connect guidance
 
 - Developer spec §5.5: hosted source choice table (public GitHub / private GitHub / zip / self-host); Connect is browser-only; Selected repositories (not All); shared-install trust boundary

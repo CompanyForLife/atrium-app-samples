@@ -58,7 +58,16 @@ registered **base URL**. Browser-facing paths are relative to
     "events": [
       { "key": "tenancy.started", "path": "/webhooks/atrium/triggers/event" }
     ]
-  }
+  },
+  "operations": [
+    {
+      "name": "list",
+      "path": "/operations/list",
+      "method": "GET",
+      "description": "List records for the organisation",
+      "effect": "read"
+    }
+  ]
 }
 ```
 
@@ -72,6 +81,7 @@ This sample is a **web app** (quick view). That is the default for almost every 
 | `triggers.schedules` | Opt-in. Empty = COHO will not tick you on a cron. Each entry: `key`, `cron` (5-field: minute hour day-of-month month day-of-week; `*`, lists, ranges, steps), `timezone` (IANA, default UTC), `path`. **Private / unreviewed apps:** at most 4 schedules, and no denser than hourly (minute field must be a single value). Reviewed public listings are not capped this way. |
 | `triggers.events` | Opt-in. Unknown keys are ignored until COHO supports them. |
 | `requestedCapabilities` | Catalogue scope ids the app requires (e.g. `conversations.write`). Legacy short names still expand. Connect fails if the connecting person cannot grant every resolved scope. See §8. |
+| `operations` | Optional. Named endpoints COHO may call on your app through the app-operations gateway (Public API + MCP). See §3.5. Omit or `[]` when unused. |
 | `config.schemaPath` / `getPath` / `putPath` | Optional app-owned **light** prefs only (a handful of scalars). Store proxies signed GET/PUT. Omit when unused. Serious UI is quick view, not this form. |
 | `config.browserBaseUrl` | Public HTTPS origin for hosted app UI. Runtime webhooks and config remain on the private registered base URL. |
 | `config.externalConfigureUrl` | Optional new-tab configure path on the browser base URL. |
@@ -282,6 +292,25 @@ The catalogue will grow. Ignore unknown keys.
 
 `tenancyReference` is the tenancy Guid. Times are UTC.
 
+### 3.5 App operations gateway (optional)
+
+Declare operations in the manifest so managers and integrations can call your app **through COHO** (one Public API / MCP connection — your app is never a second MCP endpoint).
+
+Each operation:
+
+| Field | Rules |
+|---|---|
+| `name` | Lowercase letter, then letters/digits/underscores (max 64). Callers use this name. |
+| `path` | Relative path on your base URL (e.g. `/operations/list`). Same signing as config. |
+| `method` | `GET`, `POST`, `PUT`, `PATCH`, or `DELETE`. |
+| `description` | 8–500 characters; written for an AI reader. |
+| `effect` | **Required.** `read`, `write`, or `delete` — no default. Omit or mistype and the manifest write fails. MCP confirms write/delete before calling. |
+
+**Public API:** `METHOD /v1.1/public/apps/{appReference}/{name}` with scope `apps.operations`. `appReference` is your app Guid or `ShortName`. The HTTP method must match the manifest. Org API keys may call operations only on **unrestricted organisation** installs. Personal installs and organisation installs with a person allow-list need a manager session (MCP / manage), not a bare API key.
+
+**MCP:** `list_app_operations` / `call_app_operation` (manager session). Write/delete effects ask for confirmation.
+
+**Your handler:** verify `X-Atrium-Signature` the same way as config GET/PUT (signed string includes method, path+query with `connectionReference`, connection Guid, raw body). Return JSON. Timeout 10s; no retries. Max 50 operations per manifest.
 
 ---
 
@@ -489,6 +518,8 @@ MCP is a capability of COHO Atrium, not a separately named product. Managers con
 
 Registering and updating hosted apps is available over MCP. **Connecting GitHub is not** — it is an OAuth-style install that has to happen in a browser, so it stays a Store / publisher-portal action (§5.5). Once GitHub is connected, MCP registration of a private repository works exactly like a public one.
 
+To expose your own endpoints to the manager’s AI (and to Public API callers with `apps.operations`), declare them under manifest `operations` (§3.5). COHO then surfaces them as `list_app_operations` / `call_app_operation` — you do not host MCP yourself.
+
 ### 5.5 Hosted source choices (GitHub private / public / zip)
 
 Decide the source **before** you need a Hosting build. AI agents cannot complete GitHub App install or Connect for you — those are browser steps for a human.
@@ -691,8 +722,9 @@ Missing scope returns **403**. Stacked `[RequirePublicApiScope]` attributes on o
 | `GET /properties/{propertyReference}/tenants` | `tenants.read` |
 | `GET /tenancies/{guid}` | `tenancies.read` |
 | `GET /rent-due-records` | (core Public API key; rent payment writes need `rent_collection.write`) |
+| `METHOD /apps/{appReference}/{operationName}` (app operations gateway, §3.5) | `apps.operations` |
 
-Full catalogue ids appear in the Store capability picker (`conversations.read` / `conversations.write`, `tenants.read`, `tenancies.read`, `properties.read` / `properties.write`, `maintenance.read` / `maintenance.write`, `actions.read` / `actions.write`, `calendar.read` / `calendar.write` / `calendar.delete`, `organisation.read` / `organisation.write`, and others).
+Full catalogue ids appear in the Store capability picker (`conversations.read` / `conversations.write`, `tenants.read`, `tenancies.read`, `properties.read` / `properties.write`, `maintenance.read` / `maintenance.write`, `actions.read` / `actions.write`, `calendar.read` / `calendar.write` / `calendar.delete`, `organisation.read` / `organisation.write`, `apps.operations`, and others).
 
 ### 8.2 Messaging notes for apps
 
