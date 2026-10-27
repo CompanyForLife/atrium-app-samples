@@ -15,10 +15,11 @@ Use this order almost every time — including when an AI (Claude / Cursor / sim
 1. **Explain the idea** (what the manager should do in COHO).
 2. **Clarify** only what you need (surfaces, events, Public API capabilities). Prefer a web app with a quick view (§6).
 3. **Register a Draft** in the Store (**Build an app** → Draft): name is enough. Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret from the Draft creation response.
-4. **Build against that Draft** (local process + Public API). Tell the builder they can try it in COHO once health / lifecycle / quick view work — see §10.
-5. **Only then** ask about converting Draft → real: set a Base URL (self-host), or choose Hosted source (public GitHub / private GitHub + Connect / zip) per §5.5–§5.6.
+4. **Give it a Store icon** unless one already exists. Produce `store/icon.png` (design kit §20.1 / hello-node `npm run make:icon` or an image model) and upload it on Build an app / Edit listing. Do **not** leave the initials tile (e.g. "AL", "CB") — that is the no-icon fallback, not a finished look. See §6 Your Store card.
+5. **Build against that Draft** (local process + Public API). Tell the builder they can try it in COHO once health / lifecycle / quick view work — see §10.
+6. **Only then** ask about converting Draft → real: set a Base URL (self-host), or choose Hosted source (public GitHub / private GitHub + Connect / zip) per §5.5–§5.6.
 
-Connecting GitHub or pasting a repo URL is step 5, not step 1. "Connected to GitHub" alone is not a source — the hosted form still needs the concrete `https://github.com/<org>/<repo>` URL (and Selected-repos access for private repos).
+Connecting GitHub or pasting a repo URL is step 6, not step 1. "Connected to GitHub" alone is not a source — the hosted form still needs the concrete `https://github.com/<org>/<repo>` URL (and Selected-repos access for private repos).
 
 ---
 
@@ -696,7 +697,8 @@ The Store shows each app as a card. The card picture is the app's **first screen
 - Keep the key content in the top two thirds. The bottom third fades to a dark colour behind the app name.
 - Show the app itself, not a sign-in, error or empty screen.
 - The card shows the first two lines of the short description, so lead with the benefit.
-- The icon is a square PNG, at least 512 x 512, and the picture fills the whole canvas. Do not add rounded corners, a border, a shadow or padding, and do not put a rounded icon on a coloured square: the corners would show. Transparent corners show the card colour behind. COHO rounds the corners itself. With no icon, the card shows the app's initials.
+- The icon is a square PNG, at least 512 x 512, and the picture fills the whole canvas. Do not add rounded corners, a border, a shadow or padding, and do not put a rounded icon on a coloured square: the corners would show. Transparent corners show the card colour behind. COHO rounds the corners itself.
+- **Always supply an icon** when registering or editing a listing, unless one is already on the app. With no icon, the Store shows the app's initials on a coloured tile (e.g. "AL", "CB"). That fallback is temporary scaffolding only — create and upload a real icon before you invite anyone to try the app in COHO (Default builder workflow step 4; design kit §20.1).
 - The Build an app form warns when an icon has obvious corners.
 
 

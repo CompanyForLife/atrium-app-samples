@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-27 — Store icon with Draft
+
+- Developer spec Default builder workflow: create/upload a Store icon unless one exists; avoid initials tiles
+- Design kit §0 / §20.1 + hello-node AGENTS: same prompt
+- Republish from HouseShare SoT (`b650ece4a6` / #5653)
+
 ## 2026-10-27 — Draft-first builder workflow
 
 - Developer spec: Default builder workflow (Draft first) before Hosting / GitHub / zip; §5.5 and §10 point at it
