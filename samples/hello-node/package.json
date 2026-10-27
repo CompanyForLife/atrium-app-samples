@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "node --test src/server.test.js",
-    "check:design": "node design/check.cjs src/ui.html src/configure.html"
+    "check:design": "node design/check.cjs src/ui.html src/configure.html",
+    "check:icon": "node design/check-icon.cjs store/icon.png",
+    "make:icon": "node design/make-icon.cjs --out store/icon.png",
+    "screenshot": "node design/capture-screenshot.cjs"
   }
 }

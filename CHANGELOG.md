@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-27 — self-host Store origins
+
+- Developer spec §6: document Playground (`https://playground.coho.life`) and production (`https://coho.life`) values for `ATRIUM_FRAME_ANCESTORS` / `ATRIUM_PARENT_ORIGIN`
+- Same image, env per deploy — flip both vars when cutting over; do not bake a multi-env list
+- Hello sample READMEs point at the table; kits still default to `http://localhost:4200` when unset
+- Republish developer spec and hello samples from HouseShare SoT (`d2b59e8aad`)
+
 ## 2026-10-26 — app operations gateway
 
 - Developer spec §3.5: declare `operations[]` for Public API `/v1.1/public/apps/{appReference}/{name}` (`apps.operations`) and MCP `list_app_operations` / `call_app_operation`

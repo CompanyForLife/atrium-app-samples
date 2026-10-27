@@ -560,8 +560,8 @@ When the Store registers your app as **COHO-hosted**, CodeBuild builds your repo
 | Data directory | Persist under `ATRIUM_DATA_DIR` (Hosting sets `/data`). That path is an EFS mount and must survive re-provision. |
 | Process UID/GID | Hosting runs the task as **UID 65532 and GID 65532**, matching the `/data` EFS access point. Dockerfile `USER` is overridden. |
 | Setup secret | Read `ATRIUM_SETUP_SECRET` from the environment. Hosting injects it; do not bake it into the image. |
-| Frame ancestors | Read `ATRIUM_FRAME_ANCESTORS` and set `Content-Security-Policy: frame-ancestors …` from it on quick-view HTML. Hosting injects **one** Store origin for that environment (e.g. `https://applabs.coho.management` on Labs). Do **not** hardcode a domain list in your image. |
-| Parent origin | Read `ATRIUM_PARENT_ORIGIN` for `atrium.quickView.close` postMessage. Hosting injects the **same** Store origin as `ATRIUM_FRAME_ANCESTORS`. |
+| Frame ancestors | Read `ATRIUM_FRAME_ANCESTORS` and set `Content-Security-Policy: frame-ancestors …` from it on quick-view HTML. Hosting injects **one** Store origin for that environment. Do **not** hardcode a domain list in your image. Self-host values: [§6](#self-host-store-origins). |
+| Parent origin | Read `ATRIUM_PARENT_ORIGIN` for `atrium.quickView.close` postMessage. Hosting injects the **same** Store origin as `ATRIUM_FRAME_ANCESTORS`. Self-host: same table as frame ancestors. |
 
 **Why Hosting sets 65532:** the `/data` volume is an EFS access point owned by `65532:65532`. ECS on EC2 chowns an empty mount to the task user. If the process ran as another UID (Node `USER node` at 1000, Microsoft aspnet `USER app` at 1654), the task never starts: `CannotCreateContainerError` / `lchown ... operation not permitted`, and provision times out as Failed. Hosting therefore sets the ECS container `user` to `65532:65532` so those Dockerfiles still boot. Access points also reject `lchown` to the same UID, so Hosting creates `/{app}/.keep` owned by 65532 on the filesystem before the first real task so Docker skips copy+chown on an empty volume. Keep application files readable by that user (avoid `chmod 700` trees owned only by another UID). Writing belongs under `ATRIUM_DATA_DIR` (`/data`).
 
@@ -603,14 +603,34 @@ Verify `atriumSignature` the same way as other signed GETs. Read person/org from
 
 You must:
 
-- Send `Content-Security-Policy: frame-ancestors …` using **`ATRIUM_FRAME_ANCESTORS`** when set (do not use a bare `*`). On Atrium Hosting, COHO injects **one** Store origin for that environment into the container — treat it as the source of truth. The same Docker image works everywhere because each env gets its own value; a domain move is a Hosting redeploy + re-provision, not an app rebuild. Self-hosting: set `ATRIUM_FRAME_ANCESTORS` (and usually `ATRIUM_PARENT_ORIGIN`) to the Store origin you embed from (ask COHO / copy from Hosting). Local-only fallback when unset may be `http://localhost:4200`.
+- Send `Content-Security-Policy: frame-ancestors …` using **`ATRIUM_FRAME_ANCESTORS`** when set (do not use a bare `*`). On Atrium Hosting, COHO injects **one** Store origin for that environment into the container — treat it as the source of truth. The same Docker image works everywhere because each env gets its own value; a domain move is a Hosting redeploy + re-provision, not an app rebuild.
 - Use **`ATRIUM_PARENT_ORIGIN`** as the exact target for `atrium.quickView.close` postMessage (Hosting sets it to the same origin as `ATRIUM_FRAME_ANCESTORS`).
 - Treat the page as **third-party chrome** — no requirement to match COHO CSS.
 - Never put the API key or signing secret in the query string. The launch signature is not a substitute for checking method, path, and connection.
 - For interactive UI calls, prefer `Authorization: Bearer <atriumUsageToken>`. Effective scopes are **connection grant ∩ opening person's role**. Keep the connection API key for background/webhooks only.
 - Keep the Bearer fresh for as long as the quick view stays open: listen for COHO remints and update your client. You cannot mint a usage token yourself.
 
+#### Self-host Store origins
+
 `lifecycle.setup` does **not** carry iframe parents (connect is the wrong place to pin CSP — a domain move should not require reconnect). Hosting injects `PORT`, `ATRIUM_DATA_DIR`, `ATRIUM_SETUP_SECRET`, `ATRIUM_FRAME_ANCESTORS`, and `ATRIUM_PARENT_ORIGIN` into the container at provision time.
+
+When **self-hosting**, you set both env vars yourself. They are always the **same** value: the Store / manager SPA origin for the COHO environment you are embedded from. Do **not** hardcode a multi-environment list into the image, and do not use `*`.
+
+Use **one image, different process env per deployment** (same pattern as Hosting). Playground and production are not different apps or codebases — flip the two vars (and the usual secrets / API base) when you cut over.
+
+| COHO environment | Set both vars to |
+|---|---|
+| **Playground** | `https://playground.coho.life` |
+| **Production** | `https://coho.life` |
+
+Example for a Playground self-host deploy:
+
+```bash
+export ATRIUM_FRAME_ANCESTORS=https://playground.coho.life
+export ATRIUM_PARENT_ORIGIN=https://playground.coho.life
+```
+
+These match what Atrium Hosting injects for that environment today. If COHO moves a Store host, Hosting apps are re-provisioned automatically; self-hosted apps update the two env vars and restart — no reconnect required.
 
 Thin `postMessage` bridge (parent is COHO):
 
@@ -724,7 +744,7 @@ Missing scope returns **403**. Stacked `[RequirePublicApiScope]` attributes on o
 | `GET /rent-due-records` | (core Public API key; rent payment writes need `rent_collection.write`) |
 | `METHOD /apps/{appReference}/{operationName}` (app operations gateway, §3.5) | `apps.operations` |
 
-Full catalogue ids appear in the Store capability picker (`conversations.read` / `conversations.write`, `tenants.read`, `tenancies.read`, `properties.read` / `properties.write`, `maintenance.read` / `maintenance.write`, `actions.read` / `actions.write`, `calendar.read` / `calendar.write` / `calendar.delete`, `organisation.read` / `organisation.write`, `apps.operations`, and others).
+**Living full catalogue:** [atrium-requested-capabilities.md](atrium-requested-capabilities.md) lists every grantable scope id, group, and label. The Store guided manifest editor uses the same catalogue (Read/Write by area). Prefer catalogue ids over legacy short names. That markdown file is CI-checked against `CohoScopes` so new scopes show up there when they ship.
 
 ### 8.2 Messaging notes for apps
 

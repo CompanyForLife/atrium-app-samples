@@ -1,6 +1,6 @@
 # COHO design guide for internal Atrium apps
 
-Version 0.5.1, draft, 22 Oct 2026. Built from the COHO design system docs (`docs/design/` in the HouseShare repo), COHO's compiled stylesheet, and the Atrium asset guidance. Where this file and the stylesheet disagree, the stylesheet is right.
+Version 0.6, draft, 26 Oct 2026. Built from the COHO design system docs (`docs/design/` in the HouseShare repo), COHO's compiled stylesheet, and the Atrium asset guidance. Where this file and the stylesheet disagree, the stylesheet is right.
 
 This file works together with **`coho.css`**, COHO's stylesheet trimmed to the classes documented here, and **`reorder.js`**, the kit's script for a list the user puts in order (section 11). Every class in this guide exists in the stylesheet. Nothing else is needed to build a screen, except COHO's own icons and sprite images, which section 16 and section 17 explain how to get.
 
@@ -9,7 +9,7 @@ This file works together with **`coho.css`**, COHO's stylesheet trimmed to the c
 1. Read sections 1 to 3. They say what an app screen is, the rules, and how to choose a part.
 2. Build the screen as plain HTML from the parts in sections 8 to 15, starting from the closest worked example in section 18.
 3. Paste `coho.css` into a `<style>` block in the `<head>`, unchanged. If your app can serve a file, you may link it instead. Keep the theme script at the end of `<body>`. A page with a reorderable list (section 11) also pastes `reorder.js` into its own `<script>` block, or links it, unchanged.
-4. Before you finish, work through section 20 and list any gaps as section 21 describes.
+4. Before you hand over, produce the Store listing as section 20 describes, then work through section 21 and list any gaps as section 22 describes.
 
 Do not read `coho.css` itself. It is large and tells you nothing this file does not.
 
@@ -90,7 +90,7 @@ These are checked at review. Break none of them.
 
 ## 3. Pick by intent
 
-Find the user's need on the left. Use the part in the middle, not the one on the right. If nothing fits, see section 21.
+Find the user's need on the left. Use the part in the middle, not the one on the right. If nothing fits, see section 22.
 
 | The user needs to... | Use | Not this |
 |---|---|---|
@@ -117,7 +117,7 @@ Find the user's need on the left. Use the part in the middle, not the one on the
 | Show a section is loading | A short grey line such as "Loading..." | A custom spinner |
 | Go to another page | A plain link `<a href>` | A button |
 
-Parts COHO has that are **not in this guide yet**: tabs, accordions, modals, drop-down menus, date pickers, skeleton loaders, pagination, the pound-sign input group. Do not build your own. Use separate panels, a native `<input type="date">`, or text labels instead, and record the gap (section 21).
+Parts COHO has that are **not in this guide yet**: tabs, accordions, modals, drop-down menus, date pickers, skeleton loaders, pagination, the pound-sign input group. Do not build your own. Use separate panels, a native `<input type="date">`, or text labels instead, and record the gap (section 22).
 
 ## 4. Colour
 
@@ -154,7 +154,7 @@ Dark mode:
 - COHO's dark theme does not change the tokens. It restyles each part under the `coho__dark` body class, and `coho.css` carries those rules for every part in this file. That is why you never write a token: `--color-white` is white in both themes.
 - A part flips only in the context this file documents it in. Used elsewhere, it may keep its light colours.
 - Some parts keep their light colours in dark mode in COHO itself: the plain `info-badge`, the `status--*` pills and `u-text--caption`. They are logged in `design-gaps.md`; do not work around them.
-- Check every screen in both themes before you finish (section 20).
+- Check every screen in both themes before you finish (section 21).
 
 ## 5. Typography
 
@@ -1327,7 +1327,74 @@ Stop and say so if you find yourself doing any of these.
 - **Theme errors.** Reading `prefers-color-scheme`. A light or dark control of your own. `coho__dark` or `data-theme="dark"` written into markup. A page without the theme script.
 - **Reorder errors.** A sortable library. `draggable="true"` on a row. Picking a row up anywhere but its handle. Up and down buttons for ordering. Drag CSS or drag code of your own. A `cdk-` class written into markup. The reorder script pasted with changes.
 
-## 20. Before you finish
+## 20. Store listing: icon, screenshot and copy
+
+The Store shows the app before anyone opens it: a tile with its icon, a card with its first screenshot and intro, and a detail page with the rest. Produce all of it before you hand over, in a `store/` folder at the root of the app, so the person registering the app has one place to copy from. The Build an app / edit listing forms (and the Public API / MCP listing update) accept the icon, screenshots and copy — write the files and say where they are, or upload them yourself when you have a Store session.
+
+| File | What it is |
+|---|---|
+| `store/icon.png` | The app icon (20.1) |
+| `store/icon-brief.md` | The prompt or the make command that produced the icon, so a person can make it again |
+| `store/screenshot.png` | The Store card picture (20.2) |
+| `store/listing.md` | Every listing field, one heading per field (20.3) |
+
+### 20.1 Icon
+
+A square PNG, 1024 x 1024, that fills the whole canvas: one flat background colour and one simple symbol centred on it, filling about half the width. COHO rounds the corners itself and shows the icon at 44 to 56 px, so: no text or letters, no gradients, no shadow, no bevel, no border, no padding, no rounded corners, no transparency, no fine detail. With no icon the Store shows the app's initials on a coloured tile. That is fine for a draft, not for a listing.
+
+Pick one pair from the table. The pastel set is the Store's own tile palette, so an icon made from it sits next to icon-less apps as one family. The saturated set is COHO's primary palette (section 4). Magenta is not in the table: it means the main action.
+
+| Background | Hex | Symbol |
+|---|---|---|
+| Tile green | `#C9E4C5` | `#262626` |
+| Tile pink | `#F6CCDD` | `#262626` |
+| Tile purple | `#DCCFF2` | `#262626` |
+| Tile blue | `#CEE2FF` | `#262626` |
+| Tile mint | `#D1F0EF` | `#262626` |
+| Tile peach | `#F3D6C0` | `#262626` |
+| Blue | `#293B5B` | `#FFFFFF` |
+| Primary | `#0951AA` | `#FFFFFF` |
+| Cyan | `#1C9BD8` | `#FFFFFF` |
+| Teal | `#1BB3AF` | `#FFFFFF` |
+| Pumpkin | `#F09D5D` | `#FFFFFF` |
+
+Two ways to make it. Try the first when your tool can generate images. Otherwise go straight to the second.
+
+1. **Image model.** Prompt with the colours filled in:
+
+   > Flat app icon for "{app name}", a {category} app for UK property managers that {what it does, one line}. One simple {symbol idea} symbol, centred, filling about half the canvas. Background solid {background hex}, edge to edge. Symbol solid {symbol hex}. Square, 1024 x 1024. Two flat colours only. No text or letters, no gradients, no shadow, no bevel, no border, no rounded corners, no device frame, no padding, no transparency.
+
+   Save the result as `store/icon.png` and run the check below. If it fails, put the check's message into the prompt (for example "the background must reach every edge; the last image had a rounded square on white") and try again. Stop after three attempts and use the second way. A cut-out symbol on a transparent (or plain removable) background can be placed on a flat square with the make tool's `--mark`; a full opaque square with the wrong background is not rescued — compose with `--glyph` instead, or regenerate the mark as a cut-out.
+
+2. **Compose it.** `npm run make:icon -- --background '#CEE2FF' --glyph icon-house` renders a flat square with a COHO icon from `design/icons.svg` (any id from section 16.1) through Playwright, and picks dark or white for the symbol from the background unless `--colour` says otherwise. Quote the hex (or pass bare `CEE2FF` without `#`): an unquoted `#` is a shell comment and the command fails. `--mark picture.png` places a cut-out picture instead of a glyph. With the repo, the tool is `node docs/design/atrium/tools/make-icon.js`. It needs `playwright` (`npm i playwright`, then `npx playwright install chromium`).
+
+Whichever way, run `npm run check:icon` (with the repo, `node docs/design/atrium/tools/check-icon.js store/icon.png`). It reads PNG only and refuses an image that is not square, under 512 px, over 2 MB, has transparent corners, or has corners a different colour from the inside. Fix anything it reports.
+
+Write `store/icon-brief.md`: the prompt and how many attempts it took, or the make command. A person who runs it again should get the same icon.
+
+### 20.2 Screenshot
+
+The first screenshot is the picture on the app's Store card and the banner on its detail page, with the app name over a fade across the bottom third. Capture 1440 x 900 at 2x with `npm run screenshot -- '<signed-launch-url>' store/screenshot.png` (with the repo, `node docs/design/atrium/tools/capture-screenshot.js`). COHO opens `/ui` only with a signed launch URL (`connectionReference` + `atriumSignature` — developer spec §6); unsigned `http://localhost:5100/ui` returns 401 and must not be used. After a local connection exists, mint a signed GET the same way the hello-node tests do (`registerQuickView` in `src/server.test.js`), then pass that full URL. Capture the screen that best shows what the app does, with the key content in the top two thirds: not a sign-in, an error or an empty state. The tool exits non-zero (and does not save) when the page looks like one of those. An agent with no signed screen has no screenshot, and the Store gives it a coloured card instead.
+
+### 20.3 Copy
+
+Write `store/listing.md` with one heading per field below, in this order, and the text under it. Write for a property manager deciding whether to connect, not for a developer. Long intro, full description, what's new, what it can do, prerequisites and background tasks are trimmed to their limits without warning, so stay inside them. Full name and short name are length-checked on save — keep them inside the limits too. Only the full name is required, and a listing with only a name is a draft, not a listing: fill them all.
+
+| Field | Limit | Where it shows | Write it so that |
+|---|---|---|---|
+| Full name | 100 | The title everywhere. Its initials and a colour from its hash make the fallback tile | It names the app in two or three words. Leave out "COHO" and "app" |
+| Short name | 40 | Never shown to managers. It names the API key and the hosted build | It is the full name shortened to letters, digits and spaces |
+| Intro description | 500 | The card, clamped to about two lines, and the lead line on the detail page | The first sentence is the benefit. Two sentences at most |
+| Full description | 4000 | "About this app" on the detail page. Folds behind Read more past 280 characters | It says what the app does, for whom, and what happens day to day. Plain paragraphs, no markup |
+| Category | one of six | The card and detail subline, and the browse filter | It is exactly one of Lettings, Money, Property, People, Compliance, Insight. Anything else is rejected |
+| What's new | 2000 | "What's changed" on the detail page, dated the day it is set | It says what changed in this version, in one paragraph. On first listing, what the app does on day one |
+| What it can do | 2000 | "What it can do", directly under the list of data the app can see | It describes actions and outcomes, not the scopes, which COHO already lists above it |
+| Pre-requisites | 2000 | A sidebar card | It lists what the organisation needs before connecting: data in COHO, an account elsewhere, a setting switched on. "None" if none |
+| Background tasks | 2000 | A sidebar card, under a fixed warning that the app runs in the background | It matches the manifest's schedules and events: what runs, how often, and what it touches. "None" when the manifest declares none |
+
+Price is not a field you write: every app is free today. Do not mention cost in the copy.
+
+## 21. Before you finish
 
 Fix anything you cannot tick.
 
@@ -1341,12 +1408,12 @@ Fix anything you cannot tick.
 8. Does every form control have a label, and are errors at the end of the form?
 9. Are all icons COHO icons taken from `assets/svg`, with their `icon-` ids intact, and all images COHO sprites?
 10. Is it usable at 360px wide with no sideways scrolling?
-11. Did anything you needed not exist here? Check `design-gaps.md` first, then list the rest under "Gaps" in your reply, in the form section 21 gives.
-12. If the app has an icon: is it a square PNG, at least 512 x 512, that fills the whole canvas with no rounded corners, border, shadow or padding? COHO rounds the corners itself, and a rounded icon on a square background shows its corners. With the repo, `node docs/design/atrium/tools/check-icon.js icon.png` checks this.
+11. Did anything you needed not exist here? Check `design-gaps.md` first, then list the rest under "Gaps" in your reply, in the form section 22 gives.
+12. Is there a `store/` folder with the icon, its brief, the screenshot and the listing copy, written as section 20 describes, and does `npm run check:icon` pass on the icon (with the repo, `node docs/design/atrium/tools/check-icon.js store/icon.png`)?
 13. Does every screen read correctly in both themes? Open it with `?theme=dark` on the URL and again with `?theme=light`, and compare each against COHO's own screens in that theme. The checker cannot see colour; this one is on you.
 14. If a list can be reordered: is `reorder.js` on the page unchanged, does every row carry `data-id`, does the page pass its request to `save` so that a failed save puts the rows back and shows the red notice, and does it work by mouse, by touch and from the keyboard? The checker sees the script and the markup; the rest is on you.
 
-## 21. When nothing fits
+## 22. When nothing fits
 
 1. Look again at section 3. Most needs are covered by a part you did not think of.
 2. Use the nearest part as it is. Do not stretch it with custom CSS.
