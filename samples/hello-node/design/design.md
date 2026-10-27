@@ -1,6 +1,6 @@
 # COHO design guide for internal Atrium apps
 
-Version 0.6, draft, 26 Oct 2026. Built from the COHO design system docs (`docs/design/` in the HouseShare repo), COHO's compiled stylesheet, and the Atrium asset guidance. Where this file and the stylesheet disagree, the stylesheet is right.
+Version 0.6.1, draft, 27 Oct 2026. Built from the COHO design system docs (`docs/design/` in the HouseShare repo), COHO's compiled stylesheet, and the Atrium asset guidance. Where this file and the stylesheet disagree, the stylesheet is right.
 
 This file works together with **`coho.css`**, COHO's stylesheet trimmed to the classes documented here, and **`reorder.js`**, the kit's script for a list the user puts in order (section 11). Every class in this guide exists in the stylesheet. Nothing else is needed to build a screen, except COHO's own icons and sprite images, which section 16 and section 17 explain how to get.
 
@@ -10,6 +10,8 @@ This file works together with **`coho.css`**, COHO's stylesheet trimmed to the c
 2. Build the screen as plain HTML from the parts in sections 8 to 15, starting from the closest worked example in section 18.
 3. Paste `coho.css` into a `<style>` block in the `<head>`, unchanged. If your app can serve a file, you may link it instead. Keep the theme script at the end of `<body>`. A page with a reorderable list (section 11) also pastes `reorder.js` into its own `<script>` block, or links it, unchanged.
 4. Before you hand over, produce the Store listing as section 20 describes, then work through section 21 and list any gaps as section 22 describes.
+
+**Registration order (AI builders):** create a Store **Draft** and build the screen against it first. Do not jump to Hosting, GitHub Connect, or a zip until the Draft works in COHO. Full steps: app developer spec — Default builder workflow / §10.
 
 Do not read `coho.css` itself. It is large and tells you nothing this file does not.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-27 — Draft-first builder workflow
+
+- Developer spec: Default builder workflow (Draft first) before Hosting / GitHub / zip; §5.5 and §10 point at it
+- hello-node AGENTS + design kit §0: AI builders register a Store Draft before Hosting
+- Republish from HouseShare SoT (`a6baeb29a3` / #5646)
+
 ## 2026-10-27 — self-host Store origins
 
 - Developer spec §6: document Playground (`https://playground.coho.life`) and production (`https://coho.life`) values for `ATRIUM_FRAME_ANCESTORS` / `ATRIUM_PARENT_ORIGIN`

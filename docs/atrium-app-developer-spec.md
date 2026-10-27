@@ -8,6 +8,18 @@ Before a **public** catalogue listing, COHO will ask you to pass a quality-gate 
 
 **Not in this spec:** COHO CLI, listing review UI, billing, how COHO staffs its own seed apps, or the internals of the Hosting control plane (ECS / ALB / provisioner). If COHO runs your image, the Dockerfile contract is §5.6.
 
+## Default builder workflow (Draft first)
+
+Use this order almost every time — including when an AI (Claude / Cursor / similar) is driving. **Do not start with Hosting, GitHub Connect, or a zip** unless the builder already has a working Draft and explicitly wants to convert it.
+
+1. **Explain the idea** (what the manager should do in COHO).
+2. **Clarify** only what you need (surfaces, events, Public API capabilities). Prefer a web app with a quick view (§6).
+3. **Register a Draft** in the Store (**Build an app** → Draft): name is enough. Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret from the Draft creation response.
+4. **Build against that Draft** (local process + Public API). Tell the builder they can try it in COHO once health / lifecycle / quick view work — see §10.
+5. **Only then** ask about converting Draft → real: set a Base URL (self-host), or choose Hosted source (public GitHub / private GitHub + Connect / zip) per §5.5–§5.6.
+
+Connecting GitHub or pasting a repo URL is step 5, not step 1. "Connected to GitHub" alone is not a source — the hosted form still needs the concrete `https://github.com/<org>/<repo>` URL (and Selected-repos access for private repos).
+
 ---
 
 ## 1. What an Atrium app is
@@ -522,7 +534,9 @@ To expose your own endpoints to the manager’s AI (and to Public API callers wi
 
 ### 5.5 Hosted source choices (GitHub private / public / zip)
 
-Decide the source **before** you need a Hosting build. AI agents cannot complete GitHub App install or Connect for you — those are browser steps for a human.
+Reach this section **after** a Draft (or local self-host) already works — see **Default builder workflow** above. Hosted source is how you convert a working app onto Atrium Hosting, not how you start building.
+
+Decide the source **before** you need a Hosting build. AI agents cannot complete GitHub App install or Connect for you — those are browser steps for a human. Connect binds the GitHub App to your COHO org or publisher; you still paste the full repository URL into the form (Connect alone does not pick a repo).
 
 | Source | Use when | Human steps |
 |---|---|---|
@@ -779,9 +793,11 @@ Samples target **self-host** by default. If COHO runs your image on Atrium Hosti
 
 ---
 
-## 10. Local loop (until Hosting exists)
+## 10. Local loop (Draft first; Hosting later)
 
-**Preferred (draft key first):**
+This is the default local path from **Default builder workflow**. Stay here until the app works in COHO. Only then convert to Hosted (§5.5) or a lasting self-host Base URL.
+
+**Preferred (Draft key first):**
 
 1. In a feature-flagged Store org, register a **Draft** app (name only). Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret.
 2. Build your app against that Public API key (no temporary org key).
@@ -789,6 +805,7 @@ Samples target **self-host** by default. If COHO runs your image on Atrium Hosti
 4. On **My apps**, set the Base URL to activate — COHO POSTs `lifecycle.setup` (signed with your setup secret) with the same credentials; persist the signing secret if your process did not already hold it.
 5. Confirm health, a test event or a real `tenancy.started`, logs in the Store, then disconnect when done.
 6. Before you ask for a public listing, take a screenshot of your main screen (see "Your Store card" in section 6).
+7. When ready for Atrium Hosting: pick public GitHub, private GitHub (Connect + Selected repos + paste the repo URL), or zip (§5.5), and follow the Dockerfile contract (§5.6).
 
 **Classic (URL first):**
 

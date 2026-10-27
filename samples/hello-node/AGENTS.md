@@ -1,5 +1,6 @@
 # Agent rules for this app's UI
 
+- Register a Store **Draft** first and build against it. Do not jump to Hosting, GitHub Connect, or a zip until the Draft works in COHO (app developer spec — Default builder workflow / §10).
 - Before writing or changing any UI, read `design/design.md` (the COHO design guide for Atrium apps) and use only the parts and classes it documents. These rules cite its sections by number and name; where the numbers have moved in a newer copy of the guide, follow the name.
 - Pages link `/design/coho.css` unchanged, or paste it into a `<style>` block unchanged. Write no CSS of your own: no inline styles, no other UI or icon library.
 - Icons come from `design/icons.svg` only. Copy the `<symbol>`s you use into the page's hidden sprite, as `src/ui.html` does.
