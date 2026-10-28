@@ -15,7 +15,7 @@ Use this order almost every time — including when an AI (Claude / Cursor / sim
 1. **Explain the idea** (what the manager should do in COHO).
 2. **Clarify** only what you need (surfaces, events, Public API capabilities). Prefer a web app with a quick view (§6).
 3. **Register a Draft** in the Store (**Build an app** → Draft): name is enough. Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret from the Draft creation response.
-4. **Give it a Store icon** unless one already exists. Produce `store/icon.png` (design kit §20.1 / hello-node `npm run make:icon` or an image model) and upload it on Build an app / Edit listing. Do **not** leave the initials tile (e.g. "AL", "CB") — that is the no-icon fallback, not a finished look. See §6 Your Store card.
+4. **Give it a Store icon** unless one already exists. Produce an icon (design kit §20.1 / hello-node `npm run make:icon` or an image model) and upload it on Build an app / Edit listing. Do **not** leave the initials tile (e.g. "AL", "CB") — that is the no-icon fallback, not a finished look. See §6 Your Store card. You edit your own listing in the Store; a local `store/` folder is optional, not required.
 5. **Build against that Draft** (local process + Public API). Tell the builder they can try it in COHO once health / lifecycle / quick view work — see §10.
 6. **Only then** ask about converting Draft → real: set a Base URL (self-host), or choose Hosted source (public GitHub / private GitHub + Connect / zip) per §5.5–§5.6.
 
@@ -399,7 +399,7 @@ Partner publisher public API is not shipped yet (manage + MCP only).
 }
 ```
 
-`level`: `debug` | `info` | `warning` | `error`. Warning/error counts surface as **attention** on the connection in the Store. These logs are **not** the main COHO history table.
+`level`: `debug` | `info` | `warning` | `error`. Store logs are operational history on the connection; they are **not** the main COHO history table. The customer attention red-dot is driven by live actionable states (pending permissions, setup incomplete, unhealthy, last run failed, access blocked), not by Warning/Error log volume.
 
 ### 5.3 Light config (app-owned)
 
@@ -691,6 +691,8 @@ are the standard web-app starters.
 
 ### Your Store card
 
+Register and edit your listing in the Store (Build an app / Edit listing): icon, screenshot, and copy live on the app row you own. A local `store/` folder (hello-node ships an example) is only a convenience if an AI or teammate prepares files for upload; it is not required.
+
 The Store shows each app as a card. The card picture is the app's **first screenshot**, with the app name over a fade at the bottom. An app with no screenshot gets a coloured card based on its name, so it still looks tidy, but a screenshot shows people what they are getting.
 
 - Make the first screenshot the screen that best shows what the app does. 1440 x 900 works well.
@@ -700,6 +702,7 @@ The Store shows each app as a card. The card picture is the app's **first screen
 - The icon is a square PNG, at least 512 x 512, and the picture fills the whole canvas. Do not add rounded corners, a border, a shadow or padding, and do not put a rounded icon on a coloured square: the corners would show. Transparent corners show the card colour behind. COHO rounds the corners itself.
 - **Always supply an icon** when registering or editing a listing, unless one is already on the app. With no icon, the Store shows the app's initials on a coloured tile (e.g. "AL", "CB"). That fallback is temporary scaffolding only — create and upload a real icon before you invite anyone to try the app in COHO (Default builder workflow step 4; design kit §20.1).
 - The Build an app form warns when an icon has obvious corners.
+- Before a **public** listing can be approved, fill the Store disclosure fields on Edit listing (and publisher profile where noted): privacy policy URL, sub-processors URL, licence (Atrium standard or your own terms URL), data location, support hours, a plain-English reason for each requested permission, plus publisher country and support site on the publisher profile. Design kit §20.3 lists the copy limits; the published [listing guidelines](https://staticv2.coho.life/legal/atrium-app-review-listing-guidelines/) are the product rules.
 
 
 ---

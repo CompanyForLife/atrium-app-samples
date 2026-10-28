@@ -35,7 +35,9 @@ Signature verification is pinned to the published test vectors in the [app devel
 
 ## Store listing
 
-Before the app is registered, produce a `store/` folder as section 20 of the guide describes: `icon.png`, `icon-brief.md`, `screenshot.png` and `listing.md`. `npm run make:icon -- --background '#CEE2FF' --glyph icon-house` composes an icon when no image model is available (quote the hex, or pass bare `CEE2FF`). Capture the card picture only with a signed `/ui` launch URL after a local connection exists (`npm run screenshot -- '<signed-launch-url>' store/screenshot.png` — see developer spec §6 and `registerQuickView` in `src/server.test.js`); unsigned `/ui` returns 401 and the capture tool refuses to save it. `npm run check:icon` checks the icon. The maker and the capture need `playwright` (`npm i playwright`, then `npx playwright install chromium`); the check needs only Node. A person uploads the files in Atrium > Build an app.
+Partners edit listing fields in Atrium (Build an app / Edit listing). The committed [`store/`](./store/) folder is an **optional** example for staging an icon and copy before upload; COHO seed apps use it as an internal handoff.
+
+If you use it: produce assets as section 20 of the guide describes. `npm run make:icon -- --background '#CEE2FF' --glyph icon-house` composes an icon when no image model is available (quote the hex, or pass bare `CEE2FF`). Capture the card picture only with a signed `/ui` launch URL after a local connection exists (`npm run screenshot -- '<signed-launch-url>' store/screenshot.png` — see developer spec §6 and `registerQuickView` in `src/server.test.js`); unsigned `/ui` returns 401 and the capture tool refuses to save it. `npm run check:icon` checks the icon. The maker and the capture need `playwright` (`npm i playwright`, then `npx playwright install chromium`); the check needs only Node.
 
 ## Tests
 

@@ -1393,8 +1393,14 @@ Write `store/listing.md` with one heading per field below, in this order, and th
 | What it can do | 2000 | "What it can do", directly under the list of data the app can see | It describes actions and outcomes, not the scopes, which COHO already lists above it |
 | Pre-requisites | 2000 | A sidebar card | It lists what the organisation needs before connecting: data in COHO, an account elsewhere, a setting switched on. "None" if none |
 | Background tasks | 2000 | A sidebar card, under a fixed warning that the app runs in the background | It matches the manifest's schedules and events: what runs, how often, and what it touches. "None" when the manifest declares none |
+| Privacy policy URL | https | Store detail sidebar | HTTPS link to the app privacy policy |
+| Sub-processors URL | https | Store detail sidebar | HTTPS link to the sub-processor list |
+| Licence | standard or URL | Store detail sidebar | Atrium standard app licence, or HTTPS link to your own terms |
+| Data location | 2000 | Store detail sidebar note | Where data is stored and processed, including sub-processors |
+| Support hours | 500 | Store detail sidebar | When customers can get support (publisher support site is on the publisher profile) |
+| Permission reasons | per capability | Under "What it can see" | Plain-English why for each requested capability |
 
-Price is not a field you write: every app is free today. Do not mention cost in the copy.
+Price is not a field you write: every app is free today. Do not mention cost in the copy. Public listings also need publisher country and support site on the publisher profile.
 
 ## 21. Before you finish
 
