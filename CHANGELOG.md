@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-30 — listing disclosures, publisher profile, submit-for-approval
+
+- Developer spec: publisher profile GET/PATCH, listing data location / permission reasons, submit-for-approval; MCP profile + submit tools; Draft-until-submit scoped for partner/hosted vs org dogfood
+- hello-node `store/listing.md`: Data location + conversations permission reason
+- Listing guidelines URL uses production `coho.life` (not staging)
+- Republish from HouseShare SoT (`7edda50a0e` / #5760)
+
 ## 2026-10-27 — Store icon with Draft
 
 - Developer spec Default builder workflow: create/upload a Store icon unless one exists; avoid initials tiles

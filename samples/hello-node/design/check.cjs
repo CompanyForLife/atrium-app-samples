@@ -4,7 +4,9 @@
 // in markup and never read from the OS. And the reorder rules: a list the user puts in order is reordered by the kit's
 // reorder script (design.md section 11), pasted unchanged or linked, never by a sortable library, native draggable or
 // drag code of the page's own. It reads a page as authored, before any script runs: a rendered page carries what
-// reorder.js adds (its cdk- classes, the handles' tabindex and style locks) and fails.
+// reorder.js adds (its cdk- classes, the handles' tabindex and style locks) and fails. And the title rule: COHO's header
+// names the app from its Store listing, so a screen COHO embeds has no h1 (design.md section 1); only a page opened in its
+// own tab, with no atrium.quickView.theme listener, keeps one.
 //
 //   node docs/design/atrium/tools/check.js my-app.html [more.html ...]
 //   node docs/design/atrium/tools/check.js docs/design/atrium/design.md    (checks every ```html example in the guide)
@@ -71,6 +73,12 @@ function check(name, html, isPage) {
   if (/data-theme="dark"/.test(body)) fail(name, 'data-theme="dark" hard-coded in markup (the theme script sets it from COHO; design.md section 1)');
   if (/prefers-color-scheme|matchMedia\s*\(/.test(body)) fail(name, 'reads the OS colour scheme (the theme comes from COHO, never from prefers-color-scheme)');
   if (isPage && !/classList\.toggle\(\s*['"]coho__dark['"]/.test(body)) fail(name, "does not apply COHO's theme (paste the theme script from design.md section 1)");
+
+  // Title: COHO's header names the app from its Store listing, so a screen COHO embeds has no h1 (design.md section 1).
+  // A page opened in its own tab (the external configure page) has no COHO header and no atrium.quickView.theme listener:
+  // it is the one page that keeps an h1. The guide's examples are embedded screens.
+  const embedded = !isPage || /atrium[.]quickView[.]theme/.test(body);
+  if (embedded && /<h1[ >]/i.test(body)) fail(name, "has an <h1> (COHO's header already names the app above the panel, so start with the first panel; design.md section 1, What you are building)");
 
   // Buttons: one primary per view, every button inside a button__group-item.
   const buttonTags = [...body.matchAll(/<(button|a)\b[^>]*class="([^"]*\bbutton\b[^"]*)"[^>]*>/g)];

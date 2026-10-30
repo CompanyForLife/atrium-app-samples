@@ -18,6 +18,7 @@ Use this order almost every time — including when an AI (Claude / Cursor / sim
 4. **Give it a Store icon** unless one already exists. Produce an icon (design kit §20.1 / hello-node `npm run make:icon` or an image model) and upload it on Build an app / Edit listing. Do **not** leave the initials tile (e.g. "AL", "CB") — that is the no-icon fallback, not a finished look. See §6 Your Store card. You edit your own listing in the Store; a local `store/` folder is optional, not required.
 5. **Build against that Draft** (local process + Public API). Tell the builder they can try it in COHO once health / lifecycle / quick view work — see §10.
 6. **Only then** ask about converting Draft → real: set a Base URL (self-host), or choose Hosted source (public GitHub / private GitHub + Connect / zip) per §5.5–§5.6.
+7. **Before a public catalogue listing:** fill the **publisher profile** once (country, support site and hours, privacy policy URL, sub-processors URL, licence — Atrium standard or your own terms), finish Edit listing (data location, a plain-English reason for each requested permission, screenshots, copy), then **Submit for approval**. Partner and hosted apps stay Draft until that submit; public-intent submissions remain `InReview + Private` until approval. Organisation-owned self-hosted apps may already be `Listed + Private` for dogfood — see §6 Your Store card.
 
 Connecting GitHub or pasting a repo URL is step 6, not step 1. "Connected to GitHub" alone is not a source — the hosted form still needs the concrete `https://github.com/<org>/<repo>` URL (and Selected-repos access for private repos).
 
@@ -381,12 +382,15 @@ The Store shows healthy / degraded / paused with the latest message. Catalogue l
 Organisation-owned app registration (manager API keys; Store Build an app parity):
 
 - `GET /v1.1/public/atrium/apps` — list apps this organisation owns
+- `GET /v1.1/public/atrium/publisher-profile` — get Built-by / company listing disclosures
+- `PATCH /v1.1/public/atrium/publisher-profile` — update company disclosures (country, support, privacy, sub-processors, licence)
 - `POST /v1.1/public/atrium/apps/external` — register self-hosted
 - `POST /v1.1/public/atrium/apps/hosted` — register COHO-hosted (queues provision)
-- `PATCH /v1.1/public/atrium/apps/{appReference}` — update listing (allowed while in review)
+- `PATCH /v1.1/public/atrium/apps/{appReference}` — update listing (data location, permission reasons, copy, icon/screenshots; allowed while in review)
+- `POST /v1.1/public/atrium/apps/{appReference}/submit-for-approval` — validate disclosures and move to in_review
 - `POST /v1.1/public/atrium/apps/{appReference}/hosted-update` — update hosted source / reprovision
 
-Partner publisher public API is not shipped yet (manage + MCP only).
+Partner publisher public API is not shipped yet (manage + MCP only; MCP: `GetPublisherDeveloperProfile` / `UpdatePublisherDeveloperProfile`).
 
 
 ```json
@@ -529,7 +533,14 @@ COHO validates the schema when it is loaded and validates config against that sa
 
 MCP is a capability of COHO Atrium, not a separately named product. Managers connect Claude (or similar) through their COHO account. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
 
-Registering and updating hosted apps is available over MCP. **Connecting GitHub is not** — it is an OAuth-style install that has to happen in a browser, so it stays a Store / publisher-portal action (§5.5). Once GitHub is connected, MCP registration of a private repository works exactly like a public one.
+Over MCP you can:
+
+- Register and update self-hosted or hosted apps (org tools and partner publisher tools)
+- Update listing fields including data location, permission reasons, icon, and screenshots
+- Read and update the **publisher / developer profile** (company disclosures) — org: `GetAtriumPublisherProfile` / `UpdateAtriumPublisherProfile`; partner: `GetPublisherDeveloperProfile` / `UpdatePublisherDeveloperProfile`
+- **Submit for approval** once disclosures are complete (`SubmitAtriumAppForApproval` / `SubmitPublisherAtriumAppForApproval`)
+
+**Connecting GitHub is not** available over MCP — it is an OAuth-style install that has to happen in a browser, so it stays a Store / publisher-portal action (§5.5). Once GitHub is connected, MCP registration of a private repository works exactly like a public one.
 
 To expose your own endpoints to the manager’s AI (and to Public API callers with `apps.operations`), declare them under manifest `operations` (§3.5). COHO then surfaces them as `list_app_operations` / `call_app_operation` — you do not host MCP yourself.
 
@@ -621,6 +632,7 @@ You must:
 - Send `Content-Security-Policy: frame-ancestors …` using **`ATRIUM_FRAME_ANCESTORS`** when set (do not use a bare `*`). On Atrium Hosting, COHO injects **one** Store origin for that environment into the container — treat it as the source of truth. The same Docker image works everywhere because each env gets its own value; a domain move is a Hosting redeploy + re-provision, not an app rebuild.
 - Use **`ATRIUM_PARENT_ORIGIN`** as the exact target for `atrium.quickView.close` postMessage (Hosting sets it to the same origin as `ATRIUM_FRAME_ANCESTORS`).
 - Treat the page as **third-party chrome** — no requirement to match COHO CSS.
+- Do not render the app's name as a page title. COHO's header above the iframe already shows it from the Store listing, so an `h1` with the name shows it twice. Start the page with its first panel.
 - Never put the API key or signing secret in the query string. The launch signature is not a substitute for checking method, path, and connection.
 - For interactive UI calls, prefer `Authorization: Bearer <atriumUsageToken>`. Effective scopes are **connection grant ∩ opening person's role**. Keep the connection API key for background/webhooks only.
 - Keep the Bearer fresh for as long as the quick view stays open: listen for COHO remints and update your client. You cannot mint a usage token yourself.
@@ -702,7 +714,7 @@ The Store shows each app as a card. The card picture is the app's **first screen
 - The icon is a square PNG, at least 512 x 512, and the picture fills the whole canvas. Do not add rounded corners, a border, a shadow or padding, and do not put a rounded icon on a coloured square: the corners would show. Transparent corners show the card colour behind. COHO rounds the corners itself.
 - **Always supply an icon** when registering or editing a listing, unless one is already on the app. With no icon, the Store shows the app's initials on a coloured tile (e.g. "AL", "CB"). That fallback is temporary scaffolding only — create and upload a real icon before you invite anyone to try the app in COHO (Default builder workflow step 4; design kit §20.1).
 - The Build an app form warns when an icon has obvious corners.
-- Before a **public** listing can be approved, fill the Store disclosure fields on Edit listing (and publisher profile where noted): privacy policy URL, sub-processors URL, licence (Atrium standard or your own terms URL), data location, support hours, a plain-English reason for each requested permission, plus publisher country and support site on the publisher profile. Design kit §20.3 lists the copy limits; the published [listing guidelines](https://staticv2.coho.life/legal/atrium-app-review-listing-guidelines/) are the product rules.
+- Before a **public** listing can be approved, fill company-level disclosures once on the publisher profile (country, support site and hours, privacy policy URL, sub-processors URL, licence — Atrium standard or your own terms URL), plus app-level fields on Edit listing: data location (COHO-built apps default to AWS London when blank), a plain-English reason for each requested permission, name/icon/description/screenshots. Design kit §20.3 lists the copy limits; the published [listing guidelines](https://coho.life/legal/atrium-app-review-listing-guidelines/) are the product rules.
 
 
 ---
@@ -825,7 +837,7 @@ This is the default local path from **Default builder workflow**. Stay here unti
 ## 11. Out of scope for this pack
 
 - How we run ECS/Fargate or issue a COHO git repo
-- Public listing pipeline (draft → review → listed) beyond "you will be asked to pass a quality-gate checklist"
+- Super Admin review tooling internals (you submit for approval after disclosures; SA approve is COHO-side)
 - Paid apps / Stripe
 - Injecting UI into existing COHO panels (not v1)
 

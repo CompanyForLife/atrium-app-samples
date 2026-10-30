@@ -1,6 +1,6 @@
 # COHO design guide for internal Atrium apps
 
-Version 0.6.2, draft, 27 Oct 2026. Built from the COHO design system docs (`docs/design/` in the HouseShare repo), COHO's compiled stylesheet, and the Atrium asset guidance. Where this file and the stylesheet disagree, the stylesheet is right.
+Version 0.6.3, draft, 28 Oct 2026. Built from the COHO design system docs (`docs/design/` in the HouseShare repo), COHO's compiled stylesheet, and the Atrium asset guidance. Where this file and the stylesheet disagree, the stylesheet is right.
 
 This file works together with **`coho.css`**, COHO's stylesheet trimmed to the classes documented here, and **`reorder.js`**, the kit's script for a list the user puts in order (section 11). Every class in this guide exists in the stylesheet. Nothing else is needed to build a screen, except COHO's own icons and sprite images, which section 16 and section 17 explain how to get.
 
@@ -20,6 +20,7 @@ Do not read `coho.css` itself. It is large and tells you nothing this file does 
 An app screen is a **panel inside COHO**. COHO loads it in an iframe beside its own navigation. So:
 
 - No site header, navigation bar, footer or logo. COHO supplies the frame.
+- No page title. COHO's header above the panel already shows the app's name from its Store listing (section 20, Full name), so an `h1` in the page shows the name twice. The screen starts with its first panel. Only a page COHO opens in its own tab (the external configure page) has no COHO header, and keeps one `h1` at the top.
 - One screen is one scrolling column of panels. Each panel has a title bar, a body, and where there are actions, a button group.
 - Design for narrow widths first. The panel can be small. Everything here is mobile-first.
 - Plain HTML and CSS. No framework, no build step, no other UI library.
@@ -80,7 +81,7 @@ These are checked at review. Break none of them.
 3. **No CSS of your own.** No inline `style` attributes, no `<style>` block other than the pasted stylesheet. Spacing and text are set with the utility classes.
 4. **Colour comes from the parts. You never write a colour.** Not a hex code, and not a token either: the tokens do not change in dark mode, so a token you write is a light-mode hard-code. Magenta is the main action, green is money or success, orange is a warning, red is destructive or an error, cyan is a link or information. Never pick a colour because it looks nice.
 5. **One primary button per view**, always inside `button__group` and `button__group-item`, always in the order primary, secondary, ghost, cancel. One size per group. Labels of three words or fewer.
-6. **Headings:** `heading--section` wraps every panel title. Heading levels follow the outline, never the size you want.
+6. **Headings:** `heading--section` wraps every panel title. Heading levels follow the outline, never the size you want. No `h1` in a screen COHO embeds: COHO's header names the app (section 1).
 7. **Forms:** single column unless fields truly belong side by side. Label above control. Errors at the end of the body. Footer is `hr` then a button group. Never disable the submit button to show a form is invalid.
 8. **Tables:** always `compact__table compact__table--narrow` together, column widths with `width-*` classes only.
 9. **Layout:** `grid grid--12` with `grid-span-*` for panels. `form__grid` only inside forms. No floats, no tables for layout, no other grid.
@@ -164,12 +165,12 @@ One typeface, **Mulish**, loaded in the page head. Headings are weight 800. Body
 
 | Use | Markup | Size |
 |---|---|---|
-| Page title, one per screen | `<h1 class="heading--1">` | 30px, 36px from tablet |
+| Page title, only on a page COHO opens in its own tab (section 1); never in a screen COHO embeds | `<h1 class="heading--1">` | 30px, 36px from tablet |
 | Panel title | `<h2 class="heading--2">` inside `heading--section` | 24px, 28px from tablet |
 | Sub-section | `<h3 class="heading--3">` | 20px, 24px from tablet |
 | Minor heading | `<h4 class="heading--4">` | 18px, 20px from tablet |
 | Body | `<p>` | 16px |
-| Intro line under a title | `<p class="lede">` | 20px |
+| Intro line at the top of a screen, or under a title | `<p class="lede">` | 20px |
 | Small text | `u-text--small` | 14px |
 | Caption, quiet note | `u-text--caption` | 13px, grey |
 | Smallest allowed | `u-text--tiny` | 12px. Never go below it |
@@ -321,7 +322,7 @@ Without an action in the title bar, drop `heading--has-button` and the button gr
 
 Always both `page__section` and `page__section--narrow` together. COHO's own full pages use `page__section` alone, which adds 60px above and below on wide screens. An app sits inside a COHO panel, so it uses the compact version.
 
-**Mistakes:** a bare `<h2>` with no `heading--section`; more than one action in a title bar (put the rest in the body); `h1` as a panel title (the page has one `h1`, at the top).
+**Mistakes:** a bare `<h2>` with no `heading--section`; more than one action in a title bar (put the rest in the body); an `h1` anywhere in a screen COHO embeds (COHO's header names the app; section 1).
 
 ## 9. Buttons
 
@@ -998,8 +999,7 @@ Use for a summary of an app's state: key numbers, one list, one notice.
 
 ```html
 <main class="u-padding-left--20 u-padding-right--20">
-  <h1 class="heading--1 u-margin-top--20 u-margin-bottom--10">Cleaning rota</h1>
-  <p class="lede u-margin-bottom--20">What needs your attention this week.</p>
+  <p class="lede u-margin-top--20 u-margin-bottom--20">What needs your attention this week.</p>
 
   <section class="page__section page__section--narrow">
     <div class="heading--section">
@@ -1076,7 +1076,7 @@ Use for a summary of an app's state: key numbers, one list, one notice.
 </main>
 ```
 
-What it shows: one `h1` and a lede at the top; every panel a `page__section page__section--narrow` with a `heading--section`; stat tiles on the page grid with one variant each; a notice between panels; one small secondary action in a title bar; both table classes and matching widths on `th` and `td`; pills on spans.
+What it shows: no page title, since COHO's header names the app, and a lede at the top; every panel a `page__section page__section--narrow` with a `heading--section`; stat tiles on the page grid with one variant each; a notice between panels; one small secondary action in a title bar; both table classes and matching widths on `th` and `td`; pills on spans.
 
 ### Example B: form panel with a save action
 
@@ -1084,8 +1084,6 @@ Use for creating or editing one record, or an editable settings panel.
 
 ```html
 <main class="u-padding-left--20 u-padding-right--20">
-  <h1 class="heading--1 u-margin-top--20 u-margin-bottom--20">Rent settings</h1>
-
   <section class="page__section page__section--narrow">
     <div class="heading--section">
       <h2 class="heading--2">Payment</h2>
@@ -1150,8 +1148,6 @@ Use for browsing many records of one kind.
 
 ```html
 <main class="u-padding-left--20 u-padding-right--20">
-  <h1 class="heading--1 u-margin-top--20 u-margin-bottom--20">Jobs</h1>
-
   <section class="page__section page__section--narrow">
     <div class="heading--section heading--has-button">
       <h2 class="heading--2">All jobs</h2>
@@ -1193,8 +1189,6 @@ Use for a list the user puts in order: the steps of a checklist, the stops on a 
 
 ```html
 <main class="u-padding-left--20 u-padding-right--20">
-  <h1 class="heading--1 u-margin-top--20 u-margin-bottom--20">Move-out checklist</h1>
-
   <section class="page__section page__section--narrow">
     <div class="heading--section heading--has-button">
       <h2 class="heading--2">Steps</h2>
@@ -1393,14 +1387,10 @@ Write `store/listing.md` with one heading per field below, in this order, and th
 | What it can do | 2000 | "What it can do", directly under the list of data the app can see | It describes actions and outcomes, not the scopes, which COHO already lists above it |
 | Pre-requisites | 2000 | A sidebar card | It lists what the organisation needs before connecting: data in COHO, an account elsewhere, a setting switched on. "None" if none |
 | Background tasks | 2000 | A sidebar card, under a fixed warning that the app runs in the background | It matches the manifest's schedules and events: what runs, how often, and what it touches. "None" when the manifest declares none |
-| Privacy policy URL | https | Store detail sidebar | HTTPS link to the app privacy policy |
-| Sub-processors URL | https | Store detail sidebar | HTTPS link to the sub-processor list |
-| Licence | standard or URL | Store detail sidebar | Atrium standard app licence, or HTTPS link to your own terms |
-| Data location | 2000 | Store detail sidebar note | Where data is stored and processed, including sub-processors |
-| Support hours | 500 | Store detail sidebar | When customers can get support (publisher support site is on the publisher profile) |
+| Data location | 2000 | Store detail sidebar note | Where this app stores and processes data. COHO-built apps default to AWS London when blank; override only for extras (e.g. an AI provider), which must also appear on the publisher sub-processor list |
 | Permission reasons | per capability | Under "What it can see" | Plain-English why for each requested capability |
 
-Price is not a field you write: every app is free today. Do not mention cost in the copy. Public listings also need publisher country and support site on the publisher profile.
+Price is not a field you write: every app is free today. Do not mention cost in the copy. Company-level disclosures live on the publisher profile (not in `listing.md`): country, support site and hours, privacy policy URL, sub-processors URL, and licence (Atrium standard or your own terms). COHO-built apps use COHO stock answers on the COHO publisher record (“Covered by your COHO terms”).
 
 ## 21. Before you finish
 
@@ -1408,18 +1398,19 @@ Fix anything you cannot tick.
 
 1. Does the screen start from a worked example? Say which.
 2. Is every panel a `page__section page__section--narrow` with a `heading--section` title?
-3. Is there exactly one primary button in the view?
-4. In every button group: right order, one size, each button in a `button__group-item`?
-5. Does every class in the markup appear in this file? With the repo, `node docs/design/atrium/tools/check.js my-app.html` checks this and most of the rest of this list. In a seed copied from the hello-node starter, `npm run check:design` runs the same checker. Both read the page as written, before any script runs: check the source, or the server's response, never a rendered page, which carries what `reorder.js` adds.
-6. No inline styles, no CSS beyond the pasted stylesheet, no hex codes, no new classes?
-7. Does every colour, pill and tile variant say what it means?
-8. Does every form control have a label, and are errors at the end of the form?
-9. Are all icons COHO icons taken from `assets/svg`, with their `icon-` ids intact, and all images COHO sprites?
-10. Is it usable at 360px wide with no sideways scrolling?
-11. Did anything you needed not exist here? Check `design-gaps.md` first, then list the rest under "Gaps" in your reply, in the form section 22 gives.
-12. Is there a `store/` folder with the icon, its brief, the screenshot and the listing copy, written as section 20 describes, and does `npm run check:icon` pass on the icon (with the repo, `node docs/design/atrium/tools/check-icon.js store/icon.png`)?
-13. Does every screen read correctly in both themes? Open it with `?theme=dark` on the URL and again with `?theme=light`, and compare each against COHO's own screens in that theme. The checker cannot see colour; this one is on you.
-14. If a list can be reordered: is `reorder.js` on the page unchanged, does every row carry `data-id`, does the page pass its request to `save` so that a failed save puts the rows back and shows the red notice, and does it work by mouse, by touch and from the keyboard? The checker sees the script and the markup; the rest is on you.
+3. Is there no `h1` in the screen? COHO's header already names the app above the panel (section 1). A page COHO opens in its own tab keeps one.
+4. Is there exactly one primary button in the view?
+5. In every button group: right order, one size, each button in a `button__group-item`?
+6. Does every class in the markup appear in this file? With the repo, `node docs/design/atrium/tools/check.js my-app.html` checks this and most of the rest of this list. In a seed copied from the hello-node starter, `npm run check:design` runs the same checker. Both read the page as written, before any script runs: check the source, or the server's response, never a rendered page, which carries what `reorder.js` adds.
+7. No inline styles, no CSS beyond the pasted stylesheet, no hex codes, no new classes?
+8. Does every colour, pill and tile variant say what it means?
+9. Does every form control have a label, and are errors at the end of the form?
+10. Are all icons COHO icons taken from `assets/svg`, with their `icon-` ids intact, and all images COHO sprites?
+11. Is it usable at 360px wide with no sideways scrolling?
+12. Did anything you needed not exist here? Check `design-gaps.md` first, then list the rest under "Gaps" in your reply, in the form section 22 gives.
+13. Is there a `store/` folder with the icon, its brief, the screenshot and the listing copy, written as section 20 describes, and does `npm run check:icon` pass on the icon (with the repo, `node docs/design/atrium/tools/check-icon.js store/icon.png`)?
+14. Does every screen read correctly in both themes? Open it with `?theme=dark` on the URL and again with `?theme=light`, and compare each against COHO's own screens in that theme. The checker cannot see colour; this one is on you.
+15. If a list can be reordered: is `reorder.js` on the page unchanged, does every row carry `data-id`, does the page pass its request to `save` so that a failed save puts the rows back and shows the red notice, and does it work by mouse, by touch and from the keyboard? The checker sees the script and the markup; the rest is on you.
 
 ## 22. When nothing fits
 

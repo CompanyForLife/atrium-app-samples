@@ -40,3 +40,12 @@ None
 # Background tasks
 
 None
+
+# Data location
+
+AWS London
+
+# Permission reasons
+
+- conversations: Let the sample quick view check that the current connection can call conversations on the Public API
+
