@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-30 — revenue share set by Commercial Schedule
+
+- Developer spec §6 Your share: developer share of Net Receipts is the percentage in your Commercial Schedule, agreed with COHO before you publish your first app; drop the fixed 80/20 split and "Listing is free"
+- Developer spec: Hosting runtime secrets (`runtimeEnv` manifest field, runtime-env API / MCP, Dockerfile contract row)
+- Republish from HouseShare SoT (`42b6af9155` / #5771)
+
 ## 2026-10-30 — listing disclosures, publisher profile, submit-for-approval
 
 - Developer spec: publisher profile GET/PATCH, listing data location / permission reasons, submit-for-approval; MCP profile + submit tools; Draft-until-submit scoped for partner/hosted vs org dogfood

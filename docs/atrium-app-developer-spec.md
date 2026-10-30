@@ -96,6 +96,7 @@ This sample is a **web app** (quick view). That is the default for almost every 
 | `triggers.events` | Opt-in. Unknown keys are ignored until COHO supports them. |
 | `requestedCapabilities` | Catalogue scope ids the app requires (e.g. `conversations.write`). Legacy short names still expand. Connect fails if the connecting person cannot grant every resolved scope. See §8. |
 | `operations` | Optional. Named endpoints COHO may call on your app through the app-operations gateway (Public API + MCP). See §3.5. Omit or `[]` when unused. |
+| `runtimeEnv` | Optional. Declared Hosting runtime env keys: `[{ "name", "secret", "description", "required" }]`. Values are set via the runtime-env API, not in the manifest. Required keys must be set before a Ready hosted app re-provisions. See [Runtime secrets (Hosting)](#runtime-secrets-hosting). |
 | `config.schemaPath` / `getPath` / `putPath` | Optional app-owned **light** prefs only (a handful of scalars). Store proxies signed GET/PUT. Omit when unused. Serious UI is quick view, not this form. |
 | `config.browserBaseUrl` | Public HTTPS origin for hosted app UI. Runtime webhooks and config remain on the private registered base URL. |
 | `config.externalConfigureUrl` | Optional new-tab configure path on the browser base URL. |
@@ -586,6 +587,7 @@ When the Store registers your app as **COHO-hosted**, CodeBuild builds your repo
 | Data directory | Persist under `ATRIUM_DATA_DIR` (Hosting sets `/data`). That path is an EFS mount and must survive re-provision. |
 | Process UID/GID | Hosting runs the task as **UID 65532 and GID 65532**, matching the `/data` EFS access point. Dockerfile `USER` is overridden. |
 | Setup secret | Read `ATRIUM_SETUP_SECRET` from the environment. Hosting injects it; do not bake it into the image. |
+| Runtime secrets | Optional publisher-set env (API keys, proxy URLs, …). Hosting injects each key on provision — see [Runtime secrets (Hosting)](#runtime-secrets-hosting). Do not bake secrets into the image. |
 | Frame ancestors | Read `ATRIUM_FRAME_ANCESTORS` and set `Content-Security-Policy: frame-ancestors …` from it on quick-view HTML. Hosting injects **one** Store origin for that environment. Do **not** hardcode a domain list in your image. Self-host values: [§6](#self-host-store-origins). |
 | Parent origin | Read `ATRIUM_PARENT_ORIGIN` for `atrium.quickView.close` postMessage. Hosting injects the **same** Store origin as `ATRIUM_FRAME_ANCESTORS`. Self-host: same table as frame ancestors. |
 
@@ -659,6 +661,19 @@ export ATRIUM_PARENT_ORIGIN=https://playground.coho.life
 
 These match what Atrium Hosting injects for that environment today. If COHO moves a Store host, Hosting apps are re-provisioned automatically; self-hosted apps update the two env vars and restart — no reconnect required.
 
+### Runtime secrets (Hosting)
+
+Third-party API keys and other process env that must not live in git belong in **Hosting runtime secrets**, not in the image or a committed `.env`.
+
+- **Set:** My apps / partner portal (Hosting runtime secrets editor), organisation Store manage panel, Public API `PUT /v1.1/public/atrium/apps/{appReference}/runtime-env`, or MCP `PutAtriumRuntimeEnv` / `PutPublisherAtriumRuntimeEnv`.
+- **Delete one key:** Public API `DELETE /v1.1/public/atrium/apps/{appReference}/runtime-env/{keyName}`, MCP `DeleteAtriumRuntimeEnvKey` / `DeletePublisherAtriumRuntimeEnvKey`, or the Delete control next to each key in the editor.
+- **Shape:** full-replace map of `NAME=value` keys (`^[A-Z][A-Z0-9_]{0,63}$`, max 32 keys). Empty body clears all keys.
+- **Read:** list endpoints return **names only** — values are write-only — plus `missingRequiredKeys` when the manifest declares required entries that are unset.
+- **Inject:** on every provision, each key is injected as container env from the per-app Secrets Manager document (alongside `SetupSecret`). Saving or deleting on a Ready hosted app re-provisions so the running task picks up the map.
+- **Manifest (optional):** declare expected keys in `runtimeEnv: [{ "name": "TAWK_API_KEY", "secret": true, "description": "…", "required": true }]`. Required keys must be set before a Ready hosted app can re-provision (Update / regenerate setup secret / runtime-env save).
+- **Reserved:** `PORT`, `ATRIUM_*`, `AWS_*`, `ECS_*`, and a short list of OS names cannot be set.
+- **Self-host:** set the same names on your process; COHO does not inject them.
+
 Thin `postMessage` bridge (parent is COHO):
 
 | Message `type` | Direction | Role |
@@ -730,7 +745,7 @@ Set price on **Build an app** / **Edit listing** (not in listing marketing copy)
 
 **When a paid install is charged (UTC calendar months).** Connecting on days **1–14** of the month can raise an install charge for the current month. Connecting on day **15** or later: the rest of that month is free for that connection, and the first charge is on the next 1st. Charges are whole months — no day-level proration. Disconnect ends billing after the month already paid; reconnect in a month already paid for that product does not charge again.
 
-**Your share.** Listing is free. On paid catalogue sales, the platform share is **20%** of Net Receipts; your developer share is **80%**. That split is internal bookkeeping on COHO's side (it is not a separate line on the customer's invoice). Remittance timing and tax treatment follow the Atrium Distribution & Billing Addendum.
+**Your share.** On paid catalogue sales, your developer share of Net Receipts is the percentage set out in your Commercial Schedule. You agree a Commercial Schedule with COHO before you publish your first app. The split is internal bookkeeping on COHO's side (it is not a separate line on the customer's invoice). Remittance timing and tax treatment follow the Atrium Distribution & Billing Addendum.
 
 **Price changes.** New installs pay the new price immediately. For organisations already connected, a price change takes effect on the first 1st that is at least **30 days** after you change it.
 
