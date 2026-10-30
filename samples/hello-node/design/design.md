@@ -1390,7 +1390,7 @@ Write `store/listing.md` with one heading per field below, in this order, and th
 | Data location | 2000 | Store detail sidebar note | Where this app stores and processes data. COHO-built apps default to AWS London when blank; override only for extras (e.g. an AI provider), which must also appear on the publisher sub-processor list |
 | Permission reasons | per capability | Under "What it can see" | Plain-English why for each requested capability |
 
-Price is not a field you write: every app is free today. Do not mention cost in the copy. Company-level disclosures live on the publisher profile (not in `listing.md`): country, support site and hours, privacy policy URL, sub-processors URL, and licence (Atrium standard or your own terms). COHO-built apps use COHO stock answers on the COHO publisher record (“Covered by your COHO terms”).
+Price is not a field in `listing.md`: set Free or Paid (flat monthly or per unit) on Build an app / Edit listing. Do not invent prices in the marketing copy — the Store shows the catalogue price. Publisher commercial rules (who bills, share, install timing) are in the app developer spec §6 Pricing and payments. Company-level disclosures live on the publisher profile (not in `listing.md`): country, support site and hours, privacy policy URL, sub-processors URL, and licence (Atrium standard or your own terms). COHO-built apps use COHO stock answers on the COHO publisher record (“Covered by your COHO terms”).
 
 ## 21. Before you finish
 

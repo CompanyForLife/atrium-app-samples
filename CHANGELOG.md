@@ -90,3 +90,9 @@
 - App developer spec (`manifestVersion` 1)
 - Hello samples: Node, Python, Go, .NET
 - Public API v1.1 convenience docs + lifecycle note
+
+## 2026-10-30 — publisher pricing and payments
+
+- Developer spec §6 Pricing and payments (Free/Paid, COHO card billing, 20% share, install cutoff, private seat)
+- Design kit listing guidance: price set in Store form, not listing.md copy
+

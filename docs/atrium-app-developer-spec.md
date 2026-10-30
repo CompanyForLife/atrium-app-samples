@@ -6,7 +6,7 @@ This is the pack to send an app developer (or their AI). It is the external cont
 
 Before a **public** catalogue listing, COHO will ask you to pass a quality-gate checklist (shared separately at listing time). Private org apps only need this runtime contract.
 
-**Not in this spec:** COHO CLI, listing review UI, billing, how COHO staffs its own seed apps, or the internals of the Hosting control plane (ECS / ALB / provisioner). If COHO runs your image, the Dockerfile contract is §5.6.
+**Not in this spec:** COHO CLI, listing review UI, how COHO staffs its own seed apps, or the internals of the Hosting control plane (ECS / ALB / provisioner). If COHO runs your image, the Dockerfile contract is §5.6. Catalogue pricing and payments for publishers are in §6 (Pricing and payments).
 
 ## Default builder workflow (Draft first)
 
@@ -716,6 +716,30 @@ The Store shows each app as a card. The card picture is the app's **first screen
 - The Build an app form warns when an icon has obvious corners.
 - Before a **public** listing can be approved, fill company-level disclosures once on the publisher profile (country, support site and hours, privacy policy URL, sub-processors URL, licence — Atrium standard or your own terms URL), plus app-level fields on Edit listing: data location (COHO-built apps default to AWS London when blank), a plain-English reason for each requested permission, name/icon/description/screenshots. Design kit §20.3 lists the copy limits; the published [listing guidelines](https://coho.life/legal/atrium-app-review-listing-guidelines/) are the product rules.
 
+### Pricing and payments
+
+Set price on **Build an app** / **Edit listing** (not in listing marketing copy). The Store shows the catalogue price on the card and detail page.
+
+| Choice | What the customer sees | Notes |
+|---|---|---|
+| **Free** | Free | No app charge. The installing organisation still uses its shared API/MCP credit allowance for calls your app makes. |
+| **Paid — flat monthly** | Your price per month (+ VAT where shown) | One amount for the organisation. |
+| **Paid — per unit / month** | Your price per active unit per month (+ VAT where shown) | Units are stock rooms and properties that are not disabled. Counted when the invoice is raised. |
+
+**Who bills.** COHO is the merchant of record. Customers pay COHO by **card**. Organisations with no card, or with BACS as the only default method, cannot install a paid app until a card is on file. Free apps do not need a card for the app itself.
+
+**When a paid install is charged (UTC calendar months).** Connecting on days **1–14** of the month can raise an install charge for the current month. Connecting on day **15** or later: the rest of that month is free for that connection, and the first charge is on the next 1st. Charges are whole months — no day-level proration. Disconnect ends billing after the month already paid; reconnect in a month already paid for that product does not charge again.
+
+**Your share.** Listing is free. On paid catalogue sales, the platform share is **20%** of Net Receipts; your developer share is **80%**. That split is internal bookkeeping on COHO's side (it is not a separate line on the customer's invoice). Remittance timing and tax treatment follow the Atrium Distribution & Billing Addendum.
+
+**Price changes.** New installs pay the new price immediately. For organisations already connected, a price change takes effect on the first 1st that is at least **30 days** after you change it.
+
+**Not at launch.** One-off payments and in-app purchases are not offered yet. Optional free trials exist as a product setting and are **off by default**.
+
+**Private apps (not listed).** A **COHO-hosted** private app carries a **£10 / app / month** hosting seat (card required). Self-hosted private apps have no hosting seat fee; their API/MCP use still draws from the organisation's credits.
+
+**Credits vs app price.** Every connected app (free, paid, private, COHO-built) consumes the installing organisation's shared Public API / MCP credit pool. App subscription price and usage credits are separate lines.
+
 
 ---
 
@@ -838,7 +862,7 @@ This is the default local path from **Default builder workflow**. Stay here unti
 
 - How we run ECS/Fargate or issue a COHO git repo
 - Super Admin review tooling internals (you submit for approval after disclosures; SA approve is COHO-side)
-- Paid apps / Stripe
+- Partner payout operations beyond the share and remittance pointer in §6 Pricing and payments
 - Injecting UI into existing COHO panels (not v1)
 
 If you implement health, setup, disconnect, one trigger, Public API calls, logs, and (for almost all apps) `quickViewPath` plus `frame-ancestors`, you can get most of an app done.
