@@ -532,7 +532,9 @@ COHO validates the schema when it is loaded and validates config against that sa
 
 ### 5.4 MCP (AI access)
 
-MCP is a capability of COHO Atrium, not a separately named product. Managers connect Claude (or similar) through their COHO account. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
+MCP is a capability of COHO Atrium, not a separately named product. Managers connect Claude (or similar) through their COHO account using the default address `https://mcp.coho.life/mcp`. Your **app** still integrates via Public API + this runtime contract. Do not implement a second MCP server inside the app unless you are building an AI product that happens to *use* COHO.
+
+(Path aliases under `/mcp/{label}` exist only so Claude can hold more than one COHO connector when the same URL would otherwise be rejected — support/product guidance, not something apps should depend on.)
 
 Over MCP you can:
 

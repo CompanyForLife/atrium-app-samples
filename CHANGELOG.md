@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-03 — MCP default URL + Claude path aliases
+
+- Developer spec §5.4: default MCP address `https://mcp.coho.life/mcp`; document `/mcp/{label}` aliases as Claude multi-connector opt-in only
+- Republish from HouseShare SoT (`571f8290fd` / #5832)
+
+
 ## 2026-10-30 — revenue share set by Commercial Schedule
 
 - Developer spec §6 Your share: developer share of Net Receipts is the percentage in your Commercial Schedule, agreed with COHO before you publish your first app; drop the fixed 80/20 split and "Listing is free"
