@@ -12,7 +12,7 @@ A minimal Atrium starter that shows setup, signed webhooks, native config, and a
 
 # Full description
 
-Hello Node is the COHO starter for Atrium apps on Node.js. It verifies signed lifecycle and trigger calls, stores per-connection secrets, exposes a small native config schema, and serves a quick-view UI built from the COHO design kit.
+Hello Node is the COHO starter for Atrium apps on Node.js. It verifies signed lifecycle and trigger calls, stores per-connection secrets, exposes a small native config schema, and serves a quick-view UI built from the public Atrium design system.
 
 Managers who connect it can open the quick view, change a couple of prefs, and confirm that setup and disconnect work. It is not a production product: replace the name, copy, icon, and screens with your own before listing.
 
@@ -24,13 +24,13 @@ Insight
 
 # What's new
 
-First listing pack for the hello-node starter: example Store copy, icon brief, and paths for icon and screenshot uploads.
+First listing pack for the hello-node starter: example Store copy to adapt before uploading your own icon and screenshot.
 
 # What it can do
 
 - Accept a Store connection and store the signing secret and API credentials from setup
 - Serve native config get/put for light preferences
-- Open a quick view inside COHO so builders can check the design kit UI
+- Open a quick view inside COHO so builders can check the public Atrium components
 - Clear connection state on disconnect
 
 # Pre-requisites

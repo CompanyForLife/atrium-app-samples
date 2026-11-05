@@ -7,6 +7,8 @@ Starter pack for building an Atrium app that COHO can connect, trigger, and disp
 - [App developer spec](docs/atrium-app-developer-spec.md) — runtime contract (manifest, webhooks, health, config, quick view, rate limits) plus §6 Pricing and payments
 - [Scalar COHO Public API 1.1](https://api.coho.life/scalar) — interactive API reference
 
+External screens use the [public Atrium design system](https://docs.coho.life/atrium-design/).
+
 ## Samples
 
 | Folder | Language | Default port |

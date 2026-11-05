@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /src
 COPY samples/atrium/hello-go/go.mod ./
 COPY samples/atrium/hello-go/main.go ./

@@ -24,7 +24,7 @@ export const connections = new Map();
 export const configs = new Map();
 
 /**
- * The checklist on the quick view (COHO design guide, section 11). Its order is the app's own state, kept per connection.
+ * The checklist on the quick view. Its order is the app's own state, kept per connection.
  * @type {{ id: string, name: string, due: string }[]}
  */
 export const STEPS = [
@@ -304,28 +304,21 @@ function fillTemplate(template, values) {
 }
 
 /**
- * The checklist's rows: COHO's workflow checklist row, as the guide documents it (section 11). The reorder script finds
- * the list and the handles by their classes; data-id is what the save call sends back.
+ * Render the saved checklist with accessible, labelled move controls.
  * @param {{ id: string, name: string, due: string }[]} steps
  */
 function checklistRows(steps) {
-  return steps
-    .map(
-      (step, index) =>
-        `<div class="card__detail--step-holder" data-id="${escapeHtml(step.id)}">` +
-        '<div class="card__detail--step-drag"><span class="icon icon--light-grey"><svg class="icon-drag-handle" aria-hidden="true"><use href="#icon-drag-handle"></use></svg></span></div>' +
-        `<div class="card__detail--step-checkbox"><span class="card__detail--step-index">${index + 1}</span>` +
-        `<label class="form__checkbox form__input--small"><input type="checkbox" aria-label="${escapeHtml(step.name)} done"><div class="form__checkbox-label"></div></label></div>` +
-        `<div class="card__detail--step-description"><p>${escapeHtml(step.name)}</p>` +
-        `<div class="card__detail--step-meta"><p class="u-text-color--grey u-text--small">${escapeHtml(step.due)}</p></div></div>` +
-        '</div>',
-    )
-    .join('');
+  return steps.map(step =>
+    `<div class="at-card at-stack" data-id="${escapeHtml(step.id)}">` +
+    `<h3 class="at-card__title">${escapeHtml(step.name)}</h3><p class="at-small at-muted">${escapeHtml(step.due)}</p>` +
+    '<div class="button__group at-inline">' +
+    `<div class="button__group-item"><button type="button" class="at-button" data-move="-1" aria-label="Move ${escapeHtml(step.name)} up">Move up</button></div>` +
+    `<div class="button__group-item"><button type="button" class="at-button" data-move="1" aria-label="Move ${escapeHtml(step.name)} down">Move down</button></div></div></div>`
+  ).join('');
 }
 
 /**
- * Quick view page, built to the COHO design guide (design/design.md) from src/ui.html.
- * Icons come from the hidden sprite in the template, copied from design/icons.svg.
+ * Quick view page using the public Atrium design system from src/ui.html.
  * @param {string} greeting
  * @param {string} allowedParentOrigin
  * @param {ProbeResult[]} probes
@@ -337,14 +330,9 @@ export function quickViewHtml(greeting, allowedParentOrigin, probes, checklist) 
     .map((probe) => {
       const statusLabel = probe.status > 0 ? String(probe.status) : 'n/a';
       const detail = probe.error ? probe.error : statusLabel;
-      const icon = probe.ok
-        ? '<span class="icon icon--small icon--inline"><svg class="icon-tick icon--green-xdark" aria-hidden="true"><use href="#icon-tick"></use></svg></span>'
-        : '<span class="icon icon--small icon--inline"><svg class="icon-cross icon--warning" aria-hidden="true"><use href="#icon-cross"></use></svg></span>';
-      return (
-        `<tr><td class="width-120">${escapeHtml(probe.capability)}</td>` +
-        `<td class="width-f-200 one-line"><code>${escapeHtml(probe.path)}</code></td>` +
-        `<td class="width-f-100 u-text-align--right">${icon} ${escapeHtml(detail)}</td></tr>`
-      );
+      return `<div class="at-card at-stack"><h3 class="at-card__title">${escapeHtml(probe.capability)}</h3>` +
+        `<p><code>${escapeHtml(probe.path)}</code></p>` +
+        `<p><span class="at-tag ${probe.ok ? 'at-tag--success' : 'at-tag--danger'}">${probe.ok ? 'Allowed' : 'Unavailable'}</span> ${escapeHtml(detail)}</p></div>`;
     })
     .join('');
 
@@ -360,7 +348,7 @@ export function quickViewHtml(greeting, allowedParentOrigin, probes, checklist) 
   });
 }
 
-/** External configuration page, built to the COHO design guide from src/configure.html. */
+/** External configuration page using the public Atrium design system. */
 export function externalConfigHtml() {
   return externalConfigTemplate;
 }

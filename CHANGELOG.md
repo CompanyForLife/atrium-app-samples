@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-05 - Store hub Developer tools + public design pack
+
+- Developer spec §6: document Store hub **Developer tools** (Testing / Hosting / Sharing), draft activation via **Add your app's web address**, and owner view from **Build an app -> Your apps**
+- Developer spec §10 local loop and setup-secret regeneration point at Developer tools on the hub app page (legacy Developers page removed)
+- hello-node: drop internal COHO design kit from the public sample; use public Atrium design assets under `assets/`
+- Republish from HouseShare SoT (`9624ac7d7f` / #5883, includes #5881 design extraction)
+
 ## 2026-11-03 — MCP default URL + Claude path aliases
 
 - Developer spec §5.4: default MCP address `https://mcp.coho.life/mcp`; document `/mcp/{label}` aliases as Claude multi-connector opt-in only

@@ -1,16 +1,5 @@
-# Store listing pack (example)
+# Optional Store listing staging
 
-Example files for preparing a Store listing: icon, screenshot, and copy.
+Partners register and edit listing fields in Atrium (Build an app / Edit listing). This folder is optional and contains example copy only. Replace listing.md with your app's description.
 
-**Partners:** you do not need this folder. Register the app and edit the listing in Atrium (Build an app / Edit listing). Keep this only if it helps you stage files before upload.
-
-**COHO seeds:** this folder is the internal handoff when COHO staffs and seeds the listing. Copy it into `CompanyForLife/atrium-<slug>` and replace the example copy.
-
-| File | Status in this starter |
-|---|---|
-| `listing.md` | Example copy for Hello Node. Replace with your app's fields. |
-| `icon-brief.md` | Example make command. Replace when you produce the real icon. |
-| `icon.png` | Produce with `npm run make:icon` or an image model, then `npm run check:icon`. |
-| `screenshot.png` | Produce with `npm run screenshot -- '<signed-launch-url>' store/screenshot.png` after a local connection exists. |
-
-Rules, sizes, colour table, and field limits: `design/design.md` section 20 (Store listing).
+Prepare your own icon and capture the connected app for its screenshot. Follow the developer spec's Your Store card section for dimensions and requirements. Do not capture an unsigned launch URL or a sign-in/error page.

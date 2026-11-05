@@ -1,12 +1,10 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, test } from 'node:test';
-import { fileURLToPath } from 'node:url';
 import {
   EXTERNAL_CONFIG_PATH,
   QUICK_VIEW_PATH,
@@ -116,7 +114,7 @@ test('quick view escapes greeting HTML', async () => {
   assert.match(response.body, /var parentOrigin = "http:\/\/localhost:4200"/);
   assert.match(response.body, /atrium\.quickView\.theme/);
   assert.match(response.body, /atrium\.quickView\.ready/);
-  assert.match(response.body, /atrium\.quickView\.close/);
+  assert.doesNotMatch(response.body, /id="close"/);
 });
 
 /** A signed quick view launch for the connection, with the signing secret registered. */
@@ -146,10 +144,10 @@ test('quick view renders the checklist and mints its page token', async () => {
   const listener = createRequestListener({ setupBootstrapSecret: 'bootstrap' });
   const response = await request(listener, 'GET', launch);
   assert.equal(response.status, 200);
-  assert.match(response.body, /<script src="\/design\/reorder\.js"><\/script>/);
+  assert.match(response.body, /<script src="\/assets\/checklist\.js"><\/script>/);
   for (const step of STEPS) assert.match(response.body, new RegExp(`data-id="${step.id}"`));
   const token = /"token":"(t=\d+,v1=[0-9a-f]{64})"/.exec(response.body);
-  assert.match(response.body, /class="icon icon--light-grey"><svg class="icon-drag-handle"/);
+  assert.match(response.body, /aria-label="Move Inspect the property up"/);
   assert.ok(token, 'the page carries a page token');
   assert.equal(verifyPageToken(token[1], connectionReference, 'checklist-secret'), true);
   assert.match(response.body, new RegExp(`"connectionReference":"${connectionReference}"`));
@@ -177,7 +175,7 @@ test('checklist order is saved per connection and rendered in that order', async
   const positions = order.map((id) => page.body.indexOf(`data-id="${id}"`));
   assert.ok(positions.every((p) => p >= 0));
   assert.deepEqual(positions, positions.slice().sort((a, b) => a - b));
-  assert.match(page.body, /card__detail--step-index">1<\/span>[\s\S]*Raise the invoice/);
+  assert.match(page.body, /data-id="invoice">[\s\S]*Raise the invoice/);
 
   const otherLaunch = registerQuickView('77777777-7777-7777-7777-777777777777', 'other-secret');
   const other = await request(listener, 'GET', otherLaunch);
@@ -220,17 +218,19 @@ test('checklist order survives reload', async () => {
   assert.deepEqual(stepOrders.get(connectionReference), ['report', 'invoice', 'inspect']);
 });
 
-test('rendered quick view passes the design checker', async () => {
-  const launch = registerQuickView('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'checker-secret');
+test('launch pages use public assets and no internal design resources', async () => {
   const listener = createRequestListener({ setupBootstrapSecret: 'bootstrap' });
-  const page = await request(listener, 'GET', launch);
+  const page = await request(listener, 'GET', registerQuickView('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'asset-secret'));
   assert.equal(page.status, 200);
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'hello-node-page-'));
-  const file = path.join(dir, 'ui.html');
-  await fs.writeFile(file, page.body, 'utf8');
-  const checker = fileURLToPath(new URL('../design/check.cjs', import.meta.url));
-  const output = execFileSync(process.execPath, [checker, file], { encoding: 'utf8' });
-  assert.match(output, /All checks passed/);
+  assert.match(page.body, /class="at-app"/);
+  assert.match(page.body, /data-color-mode/);
+  for (const [url, type] of [['/assets/atrium.css', 'text/css'], ['/assets/checklist.js', 'text/javascript']]) {
+    const asset = await request(listener, 'GET', url);
+    assert.equal(asset.status, 200);
+    assert.ok(asset.headers['content-type'].startsWith(type));
+    assert.equal(asset.headers['x-content-type-options'], 'nosniff');
+  }
+  assert.equal((await request(listener, 'GET', '/assets/../package.json')).status, 404);
 });
 
 test('external configure requires signed launch', async () => {
@@ -288,7 +288,7 @@ test('persistence survives reload', async () => {
   assert.equal(configs.get(connectionReference)?.greeting, 'Persistent hello');
 
   const info = await fs.stat(file);
-  assert.equal(info.mode & 0o777, 0o600);
+  if (process.platform !== 'win32') assert.equal(info.mode & 0o777, 0o600);
 
   const persisted = JSON.parse(await fs.readFile(file, 'utf8'));
   assert.equal(persisted.secrets, undefined);

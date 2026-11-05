@@ -25,19 +25,25 @@ Same runtime contract as the other hello samples:
 
 COHO opens `/ui` and `/configure` with a short-lived signed launch URL that includes `connectionReference`, `atriumUsageToken` (person + organisation + connection JWT), and `atriumSignature`. Prefer `Authorization: Bearer <atriumUsageToken>` for interactive Public API calls from the quick view; keep the connection `apiKey` from `lifecycle.setup` for background/webhooks. See [developer spec §6 / §8](../../docs/atrium-app-developer-spec.md).
 
-For local Store registration, use [`manifest.example.json`](./manifest.example.json).
+### Manifest
+
+Paste [`manifest.example.json`](./manifest.example.json) into Build an app and keep editing the Draft in Atrium. The scope-upgrade example demonstrates requesting an additional capability.
 
 Signature verification is pinned to the published test vectors in the [app developer spec](../../docs/atrium-app-developer-spec.md#311-signature-test-vectors).
 
 ## Design
 
-`design/` holds the COHO design guide for Atrium apps (`design.md`), the log of gaps builders have hit and what was done about each (`design-gaps.md`), COHO's stylesheet (`coho.css`), the reorder script (`reorder.js`), a prebuilt icon sprite (`icons.svg`), the checker (`check.cjs`), the icon check (`check-icon.cjs`), the icon maker (`make-icon.cjs`) and the screenshot capture (`capture-screenshot.cjs`). `/ui` and `/configure` are built from it: `src/ui.html` and `src/configure.html` link `/design/coho.css` and use only the parts the guide documents, and `/ui` links `/design/reorder.js` for its checklist. Read [`AGENTS.md`](./AGENTS.md) before changing any UI, and run `npm run check:design` before finishing. The folder is generated from `docs/design/atrium` in HouseShare; do not edit it here.
+Use the [public Atrium design system](https://docs.coho.life/atrium-design/) and its [AI guidance](https://docs.coho.life/atrium-design/llms-full.txt). Both pages use the unmodified public stylesheet in `assets/atrium.css`, system fonts and `at-*` classes. The host theme maps to `data-color-mode`. Read [AGENTS.md](./AGENTS.md) before UI work.
+
+The checklist uses keyboard-accessible Move up/Move down controls. Saves use an app-owned page token and retain the previous order on failure. COHO supplies the quick-view close control.
 
 ## Store listing
 
-Partners edit listing fields in Atrium (Build an app / Edit listing). The committed [`store/`](./store/) folder is an **optional** example for staging an icon and copy before upload; COHO seed apps use it as an internal handoff.
+Edit listing fields in Atrium (Build an app / Edit listing). The optional [store/](./store/) folder stages example copy before upload. See the developer spec's Your Store card section for icon and screenshot requirements.
 
-If you use it: produce assets as section 20 of the guide describes. `npm run make:icon -- --background '#CEE2FF' --glyph icon-house` composes an icon when no image model is available (quote the hex, or pass bare `CEE2FF`). Capture the card picture only with a signed `/ui` launch URL after a local connection exists (`npm run screenshot -- '<signed-launch-url>' store/screenshot.png` — see developer spec §6 and `registerQuickView` in `src/server.test.js`); unsigned `/ui` returns 401 and the capture tool refuses to save it. `npm run check:icon` checks the icon. The maker and the capture need `playwright` (`npm i playwright`, then `npx playwright install chromium`); the check needs only Node.
+## Container
+
+Build from this folder with `docker build -t atrium-hello-node .`. The image uses only this starter's package, source and public assets. No surrounding checkout is required.
 
 ## Tests
 

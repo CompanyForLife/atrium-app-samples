@@ -1,12 +1,9 @@
-# Agent rules for this app's UI
+# Atrium partner starter
 
-- Register a Store **Draft** first and build against it. Do not jump to Hosting, GitHub Connect, or a zip until the Draft works in COHO (app developer spec — Default builder workflow / §10).
-- If the app has no Store icon yet, produce one (section 20.1 — image model or `npm run make:icon`) and upload it on Build an app / Edit listing. Do not leave the initials tile (e.g. "AL", "CB"). A local `store/` folder is optional staging only; if you stage files, write `store/icon.png` (and the rest of section 20) before upload, and run `npm run check:icon`.
-- Before writing or changing any UI, read `design/design.md` (the COHO design guide for Atrium apps) and use only the parts and classes it documents. These rules cite its sections by number and name; where the numbers have moved in a newer copy of the guide, follow the name.
-- The page has no title of its own. COHO's header shows the app's name from its Store listing above the quick view, so an `h1` in `src/ui.html` shows it twice (section 1 of the guide, What you are building). Start with the first panel. Only `src/configure.html`, which COHO opens in its own tab with no COHO header, keeps one `h1`; `npm run check:design` fails an `h1` in an embedded page.
-- Pages link `/design/coho.css` unchanged, or paste it into a `<style>` block unchanged. Write no CSS of your own: no inline styles, no other UI or icon library.
-- Icons come from `design/icons.svg` only. Copy the `<symbol>`s you use into the page's hidden sprite, as `src/ui.html` does.
-- The theme is COHO's. `src/ui.html` and `src/configure.html` apply it with the theme script from section 1 of the guide (What you are building), which sets `coho__dark` on `<body>` from the signed `theme` query and the `atrium.quickView.theme` message. Never add a theme control or read the OS preference.
-- A list the user puts in order is the reorderable list from section 11 of the guide (Reorderable list), reordered only by `design/reorder.js`, linked unchanged as `src/ui.html` does. Never add a sortable library or drag code of your own; the page writes only the save call.
-- Partners edit their own listing in the Store. When staging listing assets locally, use section 20's layout (`icon.png`, `icon-brief.md`, `listing.md`, and `screenshot.png` only with a signed `/ui` launch URL via `npm run screenshot -- '<signed-launch-url>' store/screenshot.png`).
-- Before finishing, run `npm run check:design` and work through the checklist in section 21 of the guide (Before you finish). Check `design/design-gaps.md` for gaps already answered, then list any that remain.
+- Register a Store Draft using manifest.example.json and build against it before Hosting, GitHub Connect or a zip.
+- Before UI work, read https://docs.coho.life/atrium-design/llms-full.txt. Use the public at-* classes and --at-* tokens, system fonts and the supplied assets/atrium.css. No external web fonts.
+- Pages use body class="at-app". Themes use data-color-mode, from the signed launch query and origin-checked atrium.quickView.theme messages. Keep signature verification and origin checks intact.
+- COHO owns the quick-view frame and close control. Do not add another close button.
+- Keep all buttons inside button__group-item within button__group; public at-inline supplies the group spacing.
+- Edit your listing in Build an app / Edit listing. Supply an icon and a screenshot using the developer spec's Store-card guidance. The optional store/ folder stages copy before upload.
+- Run npm test before finishing. Check keyboard access, reorder save errors, both themes and standalone configuration.

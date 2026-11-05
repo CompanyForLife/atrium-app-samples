@@ -33,12 +33,11 @@ import {
   verifyPageToken,
 } from './lib.js';
 
-// Files from the design folder (COHO stylesheet, reorder script and icon sprite). Unsigned GETs: the pages link them.
-const designDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'design');
-const DESIGN_FILES = new Map([
-  ['/design/coho.css', { file: path.join(designDir, 'coho.css'), type: 'text/css; charset=utf-8' }],
-  ['/design/reorder.js', { file: path.join(designDir, 'reorder.js'), type: 'text/javascript; charset=utf-8' }],
-  ['/design/icons.svg', { file: path.join(designDir, 'icons.svg'), type: 'image/svg+xml' }],
+// Public assets are unsigned GETs so signed launch pages can load them.
+const assetsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets');
+const ASSET_FILES = new Map([
+  ['/assets/atrium.css', { file: path.join(assetsDir, 'atrium.css'), type: 'text/css; charset=utf-8' }],
+  ['/assets/checklist.js', { file: path.join(assetsDir, 'checklist.js'), type: 'text/javascript; charset=utf-8' }],
 ]);
 
 /**
@@ -74,7 +73,7 @@ function sendHtml(res, body, extraHeaders = {}) {
  * @param {import('node:http').ServerResponse} res
  * @param {{ file: string, type: string }} entry
  */
-function sendDesignFile(res, entry) {
+function sendAssetFile(res, entry) {
   const body = fs.readFileSync(entry.file);
   res.writeHead(200, {
     'Content-Type': entry.type,
@@ -302,8 +301,8 @@ export function createRequestListener(options) {
     const path = url.pathname.replace(/\/$/, '') || '/';
 
     try {
-      if (req.method === 'GET' && DESIGN_FILES.has(path)) {
-        sendDesignFile(res, DESIGN_FILES.get(path));
+      if (req.method === 'GET' && ASSET_FILES.has(path)) {
+        sendAssetFile(res, ASSET_FILES.get(path));
         return;
       }
 

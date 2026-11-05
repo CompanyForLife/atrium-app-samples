@@ -15,7 +15,7 @@ Use this order almost every time — including when an AI (Claude / Cursor / sim
 1. **Explain the idea** (what the manager should do in COHO).
 2. **Clarify** only what you need (surfaces, events, Public API capabilities). Prefer a web app with a quick view (§6).
 3. **Register a Draft** in the Store (**Build an app** → Draft): name is enough. Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret from the Draft creation response.
-4. **Give it a Store icon** unless one already exists. Produce an icon (design kit §20.1 / hello-node `npm run make:icon` or an image model) and upload it on Build an app / Edit listing. Do **not** leave the initials tile (e.g. "AL", "CB") — that is the no-icon fallback, not a finished look. See §6 Your Store card. You edit your own listing in the Store; a local `store/` folder is optional, not required.
+4. **Give it a Store icon** unless one already exists. Produce an icon (your own artwork or an image model; follow Your Store card below) and upload it on Build an app / Edit listing. Do **not** leave the initials tile (e.g. "AL", "CB") - that is the no-icon fallback, not a finished look. See section 6 Your Store card. You edit your own listing in the Store; a local `store/` folder is optional, not required.
 5. **Build against that Draft** (local process + Public API). Tell the builder they can try it in COHO once health / lifecycle / quick view work — see §10.
 6. **Only then** ask about converting Draft → real: set a Base URL (self-host), or choose Hosted source (public GitHub / private GitHub + Connect / zip) per §5.5–§5.6.
 7. **Before a public catalogue listing:** fill the **publisher profile** once (country, support site and hours, privacy policy URL, sub-processors URL, licence — Atrium standard or your own terms), finish Edit listing (data location, a plain-English reason for each requested permission, screenshots, copy), then **Submit for approval**. Partner and hosted apps stay Draft until that submit; public-intent submissions remain `InReview + Private` until approval. Organisation-owned self-hosted apps may already be `Listed + Private` for dogfood — see §6 Your Store card.
@@ -189,7 +189,7 @@ Read the setup secret from the environment as `ATRIUM_SETUP_SECRET` (the hello s
 
 - **Self-hosted (external URL) and Draft apps:** copy the value when you register and set it as `ATRIUM_SETUP_SECRET` on your service before connecting. Draft apps receive it alongside the one-time API key and signing secret.
 - **Atrium Hosting:** COHO injects `ATRIUM_SETUP_SECRET` into your task automatically on every provision. You only need a copy if you also run the same build somewhere else.
-- **Lost or leaked:** the app owner can **regenerate** it from My apps (org Store) or the publisher portal. The old value stops working immediately; hosted apps are re-provisioned with the new value; self-hosted apps must update their environment before the next connect. Regeneration does not affect connections that already completed setup.
+- **Lost or leaked:** the app owner can **regenerate** it from the app page in the Store (**Developer tools → Hosting → Setup secret**) or the publisher portal. The old value stops working immediately; hosted apps are re-provisioned with the new value; self-hosted apps must update their environment before the next connect. Regeneration does not affect connections that already completed setup.
 
 The setup secret is only for setup, and only your app's setup — it cannot verify or forge setup for any other app. After successful setup, verify config, quick-view, lifecycle, schedule, and event requests with the per-connection `data.signingSecret`.
 
@@ -729,9 +729,27 @@ The Store shows each app as a card. The card picture is the app's **first screen
 - Show the app itself, not a sign-in, error or empty screen.
 - The card shows the first two lines of the short description, so lead with the benefit.
 - The icon is a square PNG, at least 512 x 512, and the picture fills the whole canvas. Do not add rounded corners, a border, a shadow or padding, and do not put a rounded icon on a coloured square: the corners would show. Transparent corners show the card colour behind. COHO rounds the corners itself.
-- **Always supply an icon** when registering or editing a listing, unless one is already on the app. With no icon, the Store shows the app's initials on a coloured tile (e.g. "AL", "CB"). That fallback is temporary scaffolding only — create and upload a real icon before you invite anyone to try the app in COHO (Default builder workflow step 4; design kit §20.1).
+- **Always supply an icon** when registering or editing a listing, unless one is already on the app. With no icon, the Store shows the app's initials on a coloured tile (e.g. "AL", "CB"). That fallback is temporary scaffolding only - create and upload a real icon before you invite anyone to try the app in COHO (Default builder workflow step 4; Your Store card below).
 - The Build an app form warns when an icon has obvious corners.
-- Before a **public** listing can be approved, fill company-level disclosures once on the publisher profile (country, support site and hours, privacy policy URL, sub-processors URL, licence — Atrium standard or your own terms URL), plus app-level fields on Edit listing: data location (COHO-built apps default to AWS London when blank), a plain-English reason for each requested permission, name/icon/description/screenshots. Design kit §20.3 lists the copy limits; the published [listing guidelines](https://coho.life/legal/atrium-app-review-listing-guidelines/) are the product rules.
+- Before a **public** listing can be approved, fill company-level disclosures once on the publisher profile (country, support site and hours, privacy policy URL, sub-processors URL, licence — Atrium standard or your own terms URL), plus app-level fields on Edit listing: data location (COHO-built apps default to AWS London when blank), a plain-English reason for each requested permission, name/icon/description/screenshots. Follow the field limits shown in Edit listing; the published [listing guidelines](https://coho.life/legal/atrium-app-review-listing-guidelines/) are the product rules.
+
+### Developer tools (owner)
+
+Every app your organisation **built** has an app page in the Store hub (`/manage/o/{org}/atrium`). Open it from **My apps** (when connected) or **Build an app → Your apps** (including apps you have not connected yet). Owner-only tools sit in a **Developer tools** accordion on that page. Only your organisation sees it.
+
+Caption in the product: *Only your organisation sees this, because you built the app. Test, host, share and update it here. To change permissions or triggers, open Build an app → Your apps → Edit listing (manifest).*
+
+| Tab | When it appears | What it is for |
+|---|---|---|
+| **Testing** | Only when this organisation also has a connection | Send a test event (or **Run it now** with optional dry run) so you can watch what the app does without waiting for real data. Results also show under Diagnostics → Activity when you can see that panel. |
+| **Hosting** | Always for the owner | **Build status** for COHO-hosted apps (Getting your code → Building → Uploading → Going live → Live), **Show full log** / **Export CSV**, **Send new version** (GitHub or zip rebuild), and **Setup secret** regenerate (shown once). Self-hosted apps have no build log here; update the process where it runs. |
+| **Sharing** | Always for the owner | Share a private app with other organisations, and revoke those shares. |
+
+**Draft self-hosted apps:** until the app has a Base URL, the page shows **Add your app's web address** at the top. Saving it activates the draft (promotes to Listed, still private) and delivers `lifecycle.setup`. That is the hub path that replaced the old Developers page "Set base URL" control.
+
+**Owner view without a connection:** Build an app → Your apps still opens the same app page. Installation-only parts (Settings, Who can open, Diagnostics, Testing, Disconnect, Open app) stay hidden; Developer tools → Hosting / Sharing, Edit listing, and Delete remain available so a failed hosted build is visible before first connect.
+
+There is no separate "Atrium Developers" page and no in-product **Enable Store** button for managers. Store access is an organisation feature flag (developer sandboxes enable it on creation).
 
 ### Pricing and payments
 
@@ -741,7 +759,8 @@ Set price on **Build an app** / **Edit listing** (not in listing marketing copy)
 |---|---|---|
 | **Free** | Free | No app charge. The installing organisation still uses its shared API/MCP credit allowance for calls your app makes. |
 | **Paid — flat monthly** | Your price per month (+ VAT where shown) | One amount for the organisation. |
-| **Paid — per unit / month** | Your price per active unit per month (+ VAT where shown) | Units are stock rooms and properties that are not disabled. Counted when the invoice is raised. |
+| **Paid — per unit / month** | Your price per active unit per month (+ VAT where shown) | Units are stock rooms and properties that are not disabled. Counted when the invoice is raised. Optional minimum units. |
+| **Paid — banded** | The monthly fee for their portfolio size (+ VAT where shown), with all bands listed | At least two bands: finite upper bounds plus one open top band. The Store card shows the band that matches their units (or “from” the lowest when unknown) and lists every band so they can see what changes if they grow or shrink. |
 
 **Who bills.** COHO is the merchant of record. Customers pay COHO by **card**. Organisations with no card, or with BACS as the only default method, cannot install a paid app until a card is on file. Free apps do not need a card for the app itself.
 
@@ -860,8 +879,8 @@ This is the default local path from **Default builder workflow**. Stay here unti
 1. In a feature-flagged Store org, register a **Draft** app (name only). Copy the one-time API key, signing secret, API base URL, connection reference, and setup secret.
 2. Build your app against that Public API key (no temporary org key).
 3. Serve `/health` and the lifecycle paths locally with `ATRIUM_SETUP_SECRET` set to the copied setup secret; expose HTTPS if the API cannot reach localhost (tunnel).
-4. On **My apps**, set the Base URL to activate — COHO POSTs `lifecycle.setup` (signed with your setup secret) with the same credentials; persist the signing secret if your process did not already hold it.
-5. Confirm health, a test event or a real `tenancy.started`, logs in the Store, then disconnect when done.
+4. Open the app from **Build an app → Your apps** and use **Add your app's web address** to activate — COHO POSTs `lifecycle.setup` (signed with your setup secret) with the same credentials; persist the signing secret if your process did not already hold it.
+5. Confirm health, a test event (**Developer tools → Testing**) or a real `tenancy.started`, logs under Diagnostics / Hosting as relevant, then disconnect when done.
 6. Before you ask for a public listing, take a screenshot of your main screen (see "Your Store card" in section 6).
 7. When ready for Atrium Hosting: pick public GitHub, private GitHub (Connect + Selected repos + paste the repo URL), or zip (§5.5), and follow the Dockerfile contract (§5.6).
 
