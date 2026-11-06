@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-06 - manager-only audience for Atrium apps
+
+- Developer spec §1: Audience callout - apps open only for signed-in managers (Store / My apps); tenants, owners, and guests cannot use them; guest-facing products need a standalone site that may use Public API v1.1
+- Republish from HouseShare SoT (`156a2835dd` / #5908)
+
+
 ## 2026-11-05 - Store hub Developer tools + public design pack
 
 - Developer spec §6: document Store hub **Developer tools** (Testing / Hosting / Sharing), draft activation via **Add your app's web address**, and owner view from **Build an app -> Your apps**

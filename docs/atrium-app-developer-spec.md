@@ -28,6 +28,8 @@ Connecting GitHub or pasting a repo URL is step 6, not step 1. "Connected to Git
 
 An Atrium app is an **HTTPS service you run** (yourself, or later on Atrium Hosting). COHO never contains your business logic.
 
+**Audience.** Atrium apps are for **managers** signed into COHO. They open from the Store / My apps inside a manager session. Tenants (My Home), property owners, and anyone without a COHO manager login cannot see or use apps, and there is no guest share link into an Atrium app UI. Products aimed at guests or other non-managers (for example a digital guest guide emailed to people who are not COHO users) need a **standalone external site or app**. That site can still call Public API v1.1 with a manager organisation API key for data and automation; it is not an Atrium app surface for those end users.
+
 ```text
 Manager connects the app in the Store
   -> COHO POSTs signed lifecycle.setup to you
